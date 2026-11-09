@@ -151,6 +151,16 @@ h1{font-size:21px;letter-spacing:-.3px}
 .topbar b{flex:1;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tb-back{width:40px;height:40px;border-radius:12px;border:0;background:#1f232b;color:var(--ink);font-size:28px;line-height:1;padding:0 0 3px}
 .tb-fav{width:40px;height:40px;border-radius:12px;border:0;background:#1f232b;color:var(--acc);font-size:20px}
+.adbig{margin-bottom:14px}
+.adbig a{display:flex;gap:14px;align-items:center;background:linear-gradient(135deg,#232836,#1a1e27);border:1px solid #333a4a;border-radius:18px;padding:14px;color:var(--ink);text-decoration:none;transition:transform .12s cubic-bezier(.2,.8,.3,1.4)}
+.adbig a:active{transform:scale(.98)}
+.adbig img{width:120px;height:120px;border-radius:14px;object-fit:cover;background:#e9edf2;flex:0 0 auto}
+.abt{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.abt b{font-size:16px;line-height:1.35}
+.abd{font-size:13px;color:var(--mute)}
+.abt .adb{align-self:flex-start;font-size:11px;font-weight:700;color:var(--acc);background:rgba(245,196,66,.14);padding:2px 8px;border-radius:6px}
+.abgo{align-self:flex-start;margin-top:4px;font-size:13.5px;font-weight:800;color:#111;background:var(--acc);padding:7px 12px;border-radius:10px}
+.adbig .disc{font-size:10px;color:#5d6470;margin:6px 4px 0;line-height:1.4}
 /* 제휴 상품 카드 */
 .ad{border:0;padding:0;margin-top:16px;text-align:left}
 .adc{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#1b1f27,#161a21);border:1px solid var(--line);border-radius:16px;padding:12px;color:var(--ink);text-decoration:none;transition:transform .12s cubic-bezier(.2,.8,.3,1.4)}
@@ -188,6 +198,7 @@ let META=null,DET={},LIST=[],DATA={};
 let view={name:(t=>['rank','cats','whale','fav'].includes(t)?t:'rank')(store.get('tab2','rank'))},rankKey='nightUp',catSort='cap';
 // ---------- 제휴 상품 자리 (토스쇼핑 쉐어링크) ----------
 const ADS=[{img:'img/ad-charger.jpg',name:'맥도도 GaN 67W 케이블 일체형 2포트 충전기',desc:'케이블 챙길 필요 없이 바로 충전',url:'https://toss.shopping/_m/roX3Fs9A'}];
+const adBig=()=>{const a=ADS[0];return `<div class="adbig"><a href="${a.url}" target="_blank" rel="sponsored noopener noreferrer"><img src="${a.img}" alt="" width="120" height="120"><div class="abt"><span class="adb">밤샘 투자자 추천템</span><b>${esc(a.name)}</b><span class="abd">${esc(a.desc)}</span><span class="abgo">토스쇼핑에서 보기 ›</span></div></a><div class="disc">이 포스팅은 토스쇼핑 쉐어링크 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</div></div>`};
 const adSlot=()=>`<div class="ad">${ADS.map(a=>`<a class="adc" href="${a.url}" target="_blank" rel="sponsored noopener noreferrer"><img src="${a.img}" alt="" loading="lazy" width="76" height="76"><div class="adt"><span class="adb">추천템</span><b>${esc(a.name)}</b><span>${esc(a.desc)}</span></div><span class="adgo">보러가기 ›</span></a>`).join('')}<div class="disc">이 포스팅은 토스쇼핑 쉐어링크 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</div></div>`;
 const won=v=>v==null?'-':Math.round(v).toLocaleString('ko-KR')+'원';
 const sign=v=>v==null?'':(v>0?'+':'')+v.toFixed(2)+'%';
@@ -426,9 +437,9 @@ function whaleView(){
     return `<div class="li" onclick="openD('${x.code}')"><div class="no">${i+1}</div>
       <div class="l"><div class="nm">${esc(x.name)}</div><div class="s">${sub}</div><div class="tgs">${whTags(w)}</div></div>
       <div class="r"><div class="v ${isVol?'':cls(dir*Math.abs(v)*(dir))}">${main}</div><div class="p ${cls(x.ch)}"><span class="s" style="font-weight:400">오늘 </span>${sign(x.ch)}</div></div></div>`}).join('');
-  return `<div class="seg wrap">${seg}</div>${per}<div class="note">${note}${isStreak||isVol?'':` · ${whPer==='1'?'하루':'최근 '+whPer+'거래일 합계'}`} · ${day} 기준 · 상위 ${xs.length}개</div>
+  return `${adBig()}<div class="seg wrap">${seg}</div>${per}<div class="note">${note}${isStreak||isVol?'':` · ${whPer==='1'?'하루':'최근 '+whPer+'거래일 합계'}`} · ${day} 기준 · 상위 ${xs.length}개</div>
    <div class="list">${rows||'<div class="empty">해당하는 ETF가 없어요</div>'}</div>
-   <div class="note" style="margin-top:10px">외국인·기관 순매수는 수량 × 그날 종가로 계산한 추정 금액이에요. 자금 유입은 순자산 변화에서 운용 수익을 뺀 값이라 분배금 지급일 등에는 오차가 있어요. 매일 저녁 갱신.</div>${adSlot()}`;
+   <div class="note" style="margin-top:10px">외국인·기관 순매수는 수량 × 그날 종가로 계산한 추정 금액이에요. 자금 유입은 순자산 변화에서 운용 수익을 뺀 값이라 분배금 지급일 등에는 오차가 있어요. 매일 저녁 갱신.</div>`;
 }
 function whaleBox(c){const w=WH&&WH.items[c];if(!w)return '';
   const bars=(arr,lab)=>{if(!arr||!arr.length)return '';const mx=Math.max(...arr.map(Math.abs),0.1);
