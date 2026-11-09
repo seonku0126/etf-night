@@ -147,6 +147,10 @@ h1{font-size:21px;letter-spacing:-.3px}
 .hero .hp{font-size:44px;font-weight:900;letter-spacing:-1px;line-height:1.15;margin-top:4px}
 .hero.up .hp{color:var(--up)}.hero.down .hp{color:var(--down)}
 .hero .hv{font-size:14px;margin-top:4px}.hero .hv span{color:var(--mute);font-size:12px}
+.topbar{position:sticky;top:48px;z-index:5;display:flex;align-items:center;gap:6px;margin:-12px -16px 10px;padding:8px 10px;background:rgba(15,17,21,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar b{flex:1;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-back{width:40px;height:40px;border-radius:12px;border:0;background:#1f232b;color:var(--ink);font-size:28px;line-height:1;padding:0 0 3px}
+.tb-fav{width:40px;height:40px;border-radius:12px;border:0;background:#1f232b;color:var(--acc);font-size:20px}
 /* 제휴 상품 카드 */
 .ad{border:0;padding:0;margin-top:16px;text-align:left}
 .adc{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#1b1f27,#161a21);border:1px solid var(--line);border-radius:16px;padding:12px;color:var(--ink);text-decoration:none;transition:transform .12s cubic-bezier(.2,.8,.3,1.4)}
@@ -462,14 +466,24 @@ function render(){
     else h=detail(c).replace('onclick="home()">← 목록</button>','onclick="back()">← 목록</button>'+fb).replace('<div class="kv">',info+'<div class="kv">');
   }
   if(view.name==='detail')h+=whaleBox(view.code);
+  if(view.name==='detail'||view.name==='cat'){
+    h=h.replace(/<button class="back"[^>]*>[^<]*<\/button>/g,'');
+    let fav='';if(view.name==='detail'){const c=view.code;h=h.replace(/<button class="x" style="color:var\(--acc\);float:right;margin-top:-2px"[^>]*>[^<]*<\/button>/,'');fav=`<button class="tb-fav" onclick="toggleFav('${c}')">${favs.includes(c)?'★':'☆'}</button>`}
+    const ttl=view.name==='cat'?catName(view.key):((LIST.find(x=>x.code===view.code)||{}).name||'');
+    h=`<div class="topbar"><button class="tb-back" onclick="back()" aria-label="뒤로">‹</button><b>${esc(ttl)}</b>${fav}</div>`+h;
+  }
   $('#main').innerHTML=h;
 }
 let prev=null;
-function go(t){view={name:t};pfForm=null;store.set('tab2',t);render();scrollTo(0,0)}
-function openCat(k){view={name:'cat',key:k,tab:'cats'};render();scrollTo(0,0)}
-function openD(code){prev=view;view={name:'detail',code,tab:prev.tab||prev.name};render();scrollTo(0,0)}
-function back(){view=prev&&prev.name!=='detail'?prev:{name:'fav'};render()}
+let stack=[],scrolls=[];
+function go(t){view={name:t};stack=[];scrolls=[];pfForm=null;store.set('tab2',t);render();scrollTo(0,0)}
+function push(v){stack.push(view);scrolls.push(scrollY);view=v;try{history.pushState({d:stack.length},'')}catch(e){}render();scrollTo(0,0)}
+function openCat(k){push({name:'cat',key:k,tab:'cats'})}
+function openD(code){push({name:'detail',code,tab:view.tab||view.name})}
+function popView(){if(!stack.length)return false;view=stack.pop();const y=scrolls.pop()||0;render();scrollTo(0,y);return true}
+function back(){if(stack.length&&history.state&&history.state.d){history.back()}else if(!popView()){go('rank')}}
 function home(){back()}
+addEventListener('popstate',()=>{popView()});
 function unfav(code,e){e.stopPropagation();favs=favs.filter(c=>c!==code);store.set('favs',favs);render()}
 function toggleFav(code){favs=favs.includes(code)?favs.filter(c=>c!==code):[code,...favs];store.set('favs',favs);render()}
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.t));
