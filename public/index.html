@@ -6,9 +6,12 @@
 <meta name="theme-color" content="#0f1115">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta name="description" content="국내 상장 해외 ETF의 밤사이 추정 가치(iNAV), 외국인·기관 큰손 동향, 자금 유입 순위">
+<meta name="description" content="데이앤나잇 ETF — 국내 상장 해외 ETF의 밤사이 추정 가치(iNAV), 외국인·기관 큰손 동향, 자금 유입 순위">
 <link rel="icon" href="icon.svg">
-<title>ETF 밤 시세</title>
+<title>데이앤나잇 ETF · 해외 ETF 밤 시세</title>
+<meta property="og:title" content="데이앤나잇 ETF">
+<meta property="og:description" content="낮에는 한국장, 밤에는 미국장. 국내 상장 해외 ETF의 밤사이 추정 가치와 큰손 동향">
+<meta property="og:type" content="website">
 <style>
 :root{--bg:#0f1115;--card:#181b22;--line:#262a33;--ink:#eef0f4;--mute:#8a919e;--up:#ff5a5f;--down:#4e8cff;--acc:#f5c542}
 *{box-sizing:border-box}
@@ -109,7 +112,7 @@ footer{color:var(--mute);font-size:11.5px;padding:0 16px 30px;line-height:1.6}
 </head>
 <body>
 <header>
-  <h1>ETF 밤 시세</h1>
+  <h1>데이앤나잇 <span style="color:var(--acc)">ETF</span></h1>
   <div class="sub" id="status">불러오는 중…</div>
   <div class="search"><input id="q" placeholder="ETF 이름이나 종목코드 검색" autocomplete="off"><div class="results" id="res"></div></div>
   <div class="tabs"><button data-t="fav">관심</button><button data-t="cats">카테고리</button><button data-t="rank">순위</button><button data-t="whale">🐋 큰손</button></div>
