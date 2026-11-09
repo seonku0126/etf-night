@@ -68,7 +68,7 @@ for (const x of list) {
 <link rel="icon" href="/icon.svg"><meta name="theme-color" content="#0f1115"><style>${CSS}</style></head><body>
 <a class="top" href="/"><img src="/icon.svg" alt="">데이앤나잇 ETF</a>
 <h1>${esc(name)}</h1><div class="sub">국내 상장 해외 ETF · ${atTxt} 계산</div>
-${hasEst ? `<div class="big">${won(x.est)} <span class="${cls(x.pct)}" style="font-size:20px">${sign(x.pct)}</span></div><div class="sub">밤사이 예상 가격 (마감 iNAV 대비)</div>`
+${hasEst ? `<div class="card" style="text-align:center"><div class="sub">🌙 한국 장 마감 후 지금까지</div><div class="big ${cls(x.pct)}" style="font-size:44px;margin-top:2px">${x.pct > 0.005 ? '▲' : x.pct < -0.005 ? '▼' : ''}${Math.abs(x.pct).toFixed(2)}%</div><div>예상 가격 <b>${won(x.est)}</b> <span class="sub">(오늘 종가 ${won(x.p)})</span></div></div>`
     : `<div class="big">${won(x.p)} <span class="${cls(x.ch)}" style="font-size:20px">${sign(x.ch)}</span></div><div class="sub">오늘 종가</div>`}
 <div class="card kv">
 <div><span>오늘 종가</span><b>${won(x.p)} <small class="${cls(x.ch)}">${sign(x.ch)}</small></b></div>
