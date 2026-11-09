@@ -74,6 +74,7 @@ jobs:
         run: |
           rm -rf _site && cp -r public _site && mkdir -p _site/data
           cp .data/*.json _site/data/ 2>/dev/null || true
+          node engine/pages.mjs .data _site
           ls -la _site/data
 
       - name: 데이터·캐시 저장
