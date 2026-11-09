@@ -1,0 +1,22 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self' https://abacus.jasoncameron.dev">
+<title>방문자 통계 · 데이앤나잇 ETF</title>
+<style>body{margin:0 auto;max-width:520px;padding:18px;background:#0f1115;color:#eef0f4;font:15px/1.5 -apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+.k{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0}.k div{background:#181b22;border:1px solid #262a33;border-radius:14px;padding:12px;text-align:center}.k span{display:block;color:#8a919e;font-size:12px}.k b{font-size:24px}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:7px 4px;border-bottom:1px solid #262a33;text-align:right}td:first-child,th:first-child{text-align:left}th{color:#8a919e;font-weight:500}
+.bar{display:inline-block;height:8px;background:#f5c542;border-radius:4px;vertical-align:middle;margin-right:6px}p{color:#8a919e;font-size:12px}</style></head><body>
+<h2 style="margin:0">📊 방문자 통계</h2><p id="at">불러오는 중…</p>
+<div class="k"><div><span>오늘 방문자</span><b id="tu">-</b></div><div><span>오늘 조회수</span><b id="tp">-</b></div><div><span>누적 조회수</span><b id="tt">-</b></div></div>
+<table><thead><tr><th>날짜</th><th>방문자</th><th>조회수</th></tr></thead><tbody id="tb"></tbody></table>
+<p>방문자 = 하루에 처음 들어온 브라우저 수(같은 사람이 폰·PC로 오면 2명). 조회수 = 사이트를 연 횟수.</p>
+<script>
+const NS='daynnightetf',kst=t=>new Date(t+9*3600e3).toISOString().slice(0,10).replace(/-/g,'');
+const get=async k=>{try{const r=await fetch(`https://abacus.jasoncameron.dev/get/${NS}/${k}`);return r.ok?(+(await r.json()).value||0):0}catch(e){return 0}};
+(async()=>{const days=[...Array(14)].map((_,i)=>kst(Date.now()-i*864e5));
+ const rows=await Promise.all(days.map(async d=>({d,uv:await get('uv-'+d),pv:await get('pv-'+d)})));const tot=await get('pv-total');
+ document.getElementById('tu').textContent=rows[0].uv.toLocaleString();document.getElementById('tp').textContent=rows[0].pv.toLocaleString();document.getElementById('tt').textContent=tot.toLocaleString();
+ const mx=Math.max(1,...rows.map(r=>r.uv));
+ document.getElementById('tb').innerHTML=rows.map(r=>`<tr><td>${+r.d.slice(4,6)}/${+r.d.slice(6)}</td><td><span class="bar" style="width:${Math.round(r.uv/mx*60)}px"></span>${r.uv.toLocaleString()}</td><td>${r.pv.toLocaleString()}</td></tr>`).join('');
+ document.getElementById('at').textContent='실시간 · '+new Date().toLocaleString('ko-KR');})();
+</script></body></html>

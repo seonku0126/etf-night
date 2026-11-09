@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0f1115">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://abacus.jasoncameron.dev; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="description" content="데이앤나잇 ETF — 국내 상장 해외 ETF의 밤사이 추정 가치(iNAV), 외국인·기관 큰손 동향, 자금 유입 순위">
 <link rel="icon" href="icon.svg">
@@ -522,6 +522,9 @@ function status(){if(META){const d=new Date(META.at);$('#status').textContent='�
     applyWH();status();render();
   }
   await load();
+  try{const d=new Date(Date.now()+9*3600e3).toISOString().slice(0,10).replace(/-/g,''),H='https://abacus.jasoncameron.dev/hit/daynnightetf/';
+    fetch(H+'pv-total').catch(()=>{});fetch(H+'pv-'+d).catch(()=>{});
+    if(store.get('uv',null)!==d){store.set('uv',d);fetch(H+'uv-'+d).catch(()=>{})}}catch(e){}
   const hm=location.hash.match(/^#etf=([0-9A-Z]{6})$/);if(hm&&LIST.some(x=>x.code===hm[1])){openD(hm[1]);history.replaceState(null,'',location.pathname)}
   setInterval(()=>{if(document.visibilityState==='visible')load()},300000);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')load()});
