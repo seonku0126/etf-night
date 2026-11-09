@@ -108,15 +108,42 @@ button.x{background:none;border:0;color:var(--mute);font-size:13px;padding:4px}
 .ttl{display:flex;justify-content:space-between;align-items:baseline;margin:2px 2px 10px}
 .ttl b{font-size:17px}
 footer{color:var(--mute);font-size:11.5px;padding:0 16px 30px;line-height:1.6}
+
+/* ---- 다듬기 ---- */
+header{position:static;border-bottom:0;padding-bottom:4px}
+nav.tabs{position:sticky;top:0;z-index:6;background:rgba(15,17,21,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);margin:0;padding:0 16px;border-bottom:1px solid var(--line)}
+.li .s b.up{color:var(--up)}.li .s b.down{color:var(--down)}.li .s b.flat{color:var(--mute)}
+html{-webkit-tap-highlight-color:transparent}
+.brand{display:flex;align-items:center;gap:8px}.brand img{width:26px;height:26px;border-radius:7px}
+h1{font-size:21px;letter-spacing:-.3px}
+.tagline{margin:6px 0 4px;font-size:13.5px;line-height:1.5;color:#c9ced8}.tagline b{color:var(--ink)}
+.tabs button{font-size:16px}
+.li{padding:14px 14px;gap:12px}
+.li .nm{font-size:16px;font-weight:600;letter-spacing:-.2px}
+.li .s{font-size:12.5px;margin-top:3px}.li .s b{color:#c9ced8;font-weight:600}
+.li .v{font-size:17px;font-weight:700;letter-spacing:-.2px}
+.li .no{width:24px;height:24px;line-height:24px;border-radius:7px;background:#1f232b;font-size:12.5px}
+.li .no.top{background:rgba(245,196,66,.16);color:var(--acc)}
+.pt{display:inline-block;margin-top:4px;font-size:13.5px;font-weight:700;padding:2px 8px;border-radius:7px}
+.pt.up{background:rgba(255,90,95,.14)}.pt.down{background:rgba(78,140,255,.14)}.pt.flat{background:#1f232b}
+.pt em{font-style:normal;font-weight:600;font-size:11.5px;opacity:.85;margin-right:3px}
+.seg button{font-size:14px;padding:8px 13px}
+/* 누를 때 쫀득한 느낌 */
+button,.li,.cat,.card,.results div,.pick div{transition:transform .12s cubic-bezier(.2,.8,.3,1.4),background-color .15s,opacity .15s;cursor:pointer;user-select:none;-webkit-user-select:none}
+button:active,.cat:active,.seg button:active{transform:scale(.94)}
+.li:active,.card:active,.results div:active{transform:scale(.985);background:#1f232b}
+.tabs button:active{transform:scale(.92)}
+.cat:hover,.li:hover{background:#1c2029}
 </style>
 </head>
 <body>
 <header>
-  <h1>데이앤나잇 <span style="color:var(--acc)">ETF</span></h1>
+  <div class="brand"><img src="icon.svg" alt=""><h1>데이앤나잇 <span style="color:var(--acc)">ETF</span></h1></div>
+  <p class="tagline">미국장이 열린 밤, <b>내 해외 ETF는 지금 얼마일까?</b><br>밤사이 예상 가격과 큰손 움직임을 한눈에.</p>
   <div class="sub" id="status">불러오는 중…</div>
-  <div class="search"><input id="q" placeholder="ETF 이름이나 종목코드 검색" autocomplete="off"><div class="results" id="res"></div></div>
-  <div class="tabs"><button data-t="fav">관심</button><button data-t="cats">카테고리</button><button data-t="rank">순위</button><button data-t="whale">🐋 큰손</button></div>
+  <div class="search"><input id="q" placeholder="🔍 ETF 이름으로 검색 (예: 나스닥, S&P500)" autocomplete="off"><div class="results" id="res"></div></div>
 </header>
+<nav class="tabs"><button data-t="rank">순위</button><button data-t="cats">카테고리</button><button data-t="whale">큰손</button><button data-t="fav">관심</button></nav>
 <main id="main"><div class="empty">불러오는 중…</div></main>
 <footer>추정치이며 투자 권유가 아닙니다. 마감 iNAV, 구성종목 비중, 미국 시세, 원/달러 환율로 계산합니다. 미국 정규장이 닫혀 있을 때 큰 숫자는 지수 선물 움직임까지 반영한 값입니다. 밤 추정은 시가총액 상위 150개만 계산하고, 거래대금·등락률은 한국 장 기준, 외국인 순매수는 전 거래일 기준입니다.</footer>
 <script>
@@ -124,7 +151,7 @@ const $=s=>document.querySelector(s);
 const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 let favs=store.get('favs',['133690','360750','381180']);
 let META=null,DET={},LIST=[],DATA={};
-let view={name:(t=>t==='pf'?'cats':t)(store.get('tab','cats'))},rankKey='nightUp',catSort='cap';
+let view={name:(t=>['rank','cats','whale','fav'].includes(t)?t:'rank')(store.get('tab2','rank'))},rankKey='nightUp',catSort='cap';
 // ---------- 쿠팡 파트너스 광고 자리: 승인 후 받은 배너 코드를 AD_HTML에 넣으면 표시됨 ----------
 const AD_HTML='';
 const adSlot=()=>`<div class="ad"><div class="disc">이 영역은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</div>${AD_HTML||'<div class="slot">광고 자리 (쿠팡 파트너스 승인 후 표시)</div>'}</div>`;
@@ -160,11 +187,14 @@ function load(code){if(DET[code])DATA[code]={...DET[code],code};else if(META)DAT
 const M=code=>LIST.find(x=>x.code===code)||{};
 
 // ---------- 공통 목록 줄 ----------
-function li(x,i,right){
-  const r=right||(x.est!=null?{v:won(x.est),p:x.pct,lab:'밤 예상'}:{v:won(x.price),p:x.ch,lab:'오늘'});
-  return `<div class="li" onclick="openD('${x.code}')">${i!=null?`<div class="no">${i+1}</div>`:''}
-   <div class="l"><div class="nm">${esc(x.name)}</div><div class="s">${x.code}${x.cap?` · 시총 ${eok(x.cap)}`:''}</div></div>
-   <div class="r"><div class="v">${r.v}</div><div class="p ${cls(r.p)}">${r.lab?`<span class="s" style="font-weight:400">${r.lab} </span>`:''}${sign(r.p)}</div></div></div>`;
+function pctTag(p,lab){if(p==null)return '<span class="pt flat">-</span>';const c=cls(p),ar=p>0.005?'▲':p<-0.005?'▼':'';return `<span class="pt ${c}">${lab?`<em>${lab}</em>`:''}${ar}${Math.abs(p).toFixed(2)}%</span>`}
+function li(x,i,o){
+  o=o||{};const v=o.v!=null?o.v:won(x.price),p=o.p!==undefined?o.p:x.ch,lab=o.lab!==undefined?o.lab:'오늘';
+  const subs=[`거래대금 <b>${eok((x.amt||0)/100)}</b>`];if(o.extra)subs.push(o.extra);
+  else if(x.est!=null&&lab==='오늘')subs.push(`밤 예상 <b class="${cls(x.pct)}">${sign(x.pct)}</b>`);
+  return `<div class="li" onclick="openD('${x.code}')">${i!=null?`<div class="no${i<3?' top':''}">${i+1}</div>`:''}
+   <div class="l"><div class="nm">${esc(x.name)}</div><div class="s">${subs.join(' · ')}</div></div>
+   <div class="r"><div class="v">${v}</div>${pctTag(p,o.lab===''?'':(lab==='오늘'?'':lab))}</div></div>`;
 }
 
 
@@ -244,16 +274,16 @@ function catView(k){
   const S={cap:(a,b)=>(b.cap||0)-(a.cap||0),night:(a,b)=>(b.pct??-1e9)-(a.pct??-1e9),today:(a,b)=>(b.ch??-1e9)-(a.ch??-1e9),amt:(a,b)=>(b.amt||0)-(a.amt||0)};
   xs=xs.slice().sort(S[catSort]);
   const seg=[['cap','시가총액'],['night','밤 예상 등락'],['today','오늘 등락'],['amt','거래대금']].map(([k2,n])=>`<button class="${catSort===k2?'on':''}" onclick="catSort='${k2}';render()">${n}</button>`).join('');
-  return `<button class="back" onclick="go('cats')">← 카테고리</button><div class="ttl"><b>${catName(k)}</b><span class="s">${xs.length}개</span></div><div class="seg">${seg}</div><div class="list">${xs.map((x,i)=>li(x,null,catSort==='today'?{v:won(x.price),p:x.ch,lab:'오늘'}:catSort==='amt'?{v:eok(x.amt/100),p:x.ch,lab:'오늘'}:null)).join('')}</div>${adSlot()}`;
+  return `<button class="back" onclick="go('cats')">← 카테고리</button><div class="ttl"><b>${catName(k)}</b><span class="s">${xs.length}개</span></div><div class="seg">${seg}</div><div class="list">${xs.map((x,i)=>li(x,null,catSort==='night'&&x.est!=null?{v:won(x.est),p:x.pct,lab:'밤',extra:`오늘 종가 <b>${won(x.price)}</b>`}:{})).join('')}</div>${adSlot()}`;
 }
 const RANKS=[
- ['nightUp','밤 예상 상승',x=>x.pct,1,x=>({v:won(x.est),p:x.pct,lab:''})],
- ['nightDown','밤 예상 하락',x=>x.pct,-1,x=>({v:won(x.est),p:x.pct,lab:''})],
- ['amt','거래대금',x=>x.amt,1,x=>({v:eok(x.amt/100),p:x.ch,lab:'오늘'})],
- ['fbuy','외국인 순매수',x=>x.fb,1,x=>({v:(x.fb>0?'+':'')+eok(x.fb),p:x.ch,lab:'오늘'})],
- ['fsell','외국인 순매도',x=>x.fb,-1,x=>({v:eok(x.fb),p:x.ch,lab:'오늘'})],
- ['todayUp','오늘 급상승',x=>x.ch,1,x=>({v:won(x.price),p:x.ch,lab:''})],
- ['todayDown','오늘 급하락',x=>x.ch,-1,x=>({v:won(x.price),p:x.ch,lab:''})],
+ ['nightUp','🌙 밤 예상 상승',x=>x.pct,1,x=>({v:won(x.est),p:x.pct,lab:'밤',extra:`오늘 종가 <b>${won(x.price)}</b>`})],
+ ['nightDown','🌙 밤 예상 하락',x=>x.pct,-1,x=>({v:won(x.est),p:x.pct,lab:'밤',extra:`오늘 종가 <b>${won(x.price)}</b>`})],
+ ['amt','💰 거래대금',x=>x.amt,1,x=>({})],
+ ['todayUp','🔺 오늘 급상승',x=>x.ch,1,x=>({})],
+ ['todayDown','🔻 오늘 급하락',x=>x.ch,-1,x=>({})],
+ ['fbuy','🌏 외국인 순매수',x=>x.fb,1,x=>({extra:`외국인 <b class="up">+${eok(x.fb)}</b>`})],
+ ['fsell','🌏 외국인 순매도',x=>x.fb,-1,x=>({extra:`외국인 <b class="down">${eok(x.fb)}</b>`})],
 ];
 function rankView(){
   const [k,n,f,dir,right]=RANKS.find(r=>r[0]===rankKey);
@@ -392,7 +422,7 @@ function render(){
   $('#main').innerHTML=h;
 }
 let prev=null;
-function go(t){view={name:t};pfForm=null;store.set('tab',t);render();scrollTo(0,0)}
+function go(t){view={name:t};pfForm=null;store.set('tab2',t);render();scrollTo(0,0)}
 function openCat(k){view={name:'cat',key:k,tab:'cats'};render();scrollTo(0,0)}
 function openD(code){prev=view;view={name:'detail',code,tab:prev.tab||prev.name};render();scrollTo(0,0)}
 function back(){view=prev&&prev.name!=='detail'?prev:{name:'fav'};render()}
@@ -400,11 +430,13 @@ function home(){back()}
 function unfav(code,e){e.stopPropagation();favs=favs.filter(c=>c!==code);store.set('favs',favs);render()}
 function toggleFav(code){favs=favs.includes(code)?favs.filter(c=>c!==code):[code,...favs];store.set('favs',favs);render()}
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.t));
+document.addEventListener('touchstart',()=>{},{passive:true});
+document.addEventListener('click',e=>{if(e.target.closest('button,.li,.cat')&&navigator.vibrate)try{navigator.vibrate(8)}catch(_){}} ,true);
 $('#q').addEventListener('input',e=>{
   const q=e.target.value.trim().toLowerCase().replace(/\s/g,'');const box=$('#res');
   if(!q){box.style.display='none';return}
   const hit=LIST.filter(x=>x.code.toLowerCase().includes(q)||x.name.toLowerCase().replace(/\s/g,'').includes(q)).slice(0,30);
-  box.innerHTML=hit.length?hit.map(x=>`<div onclick="pick('${x.code}')"><span>${esc(x.name)} <small>${x.code}</small></span><small>${won(x.price)}</small></div>`).join(''):'<div><small>검색 결과가 없어요</small></div>';
+  box.innerHTML=hit.length?hit.map(x=>`<div onclick="pick('${x.code}')"><span>${esc(x.name)}</span><small>${won(x.price)}</small></div>`).join(''):'<div><small>검색 결과가 없어요</small></div>';
   box.style.display='block';
 });
 function pick(code){$('#q').value='';$('#res').style.display='none';openD(code)}
