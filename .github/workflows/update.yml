@@ -1,0 +1,92 @@
+name: 데이터 갱신 및 배포
+on:
+  schedule:
+    # GitHub 예약은 UTC 기준이고 5~20분 늦게 시작될 수 있어요
+    - cron: '40 13 * * 1-5'   # 22:40 KST 월~금  밤 추정
+    - cron: '40 17 * * 1-5'   # 02:40 KST 화~토
+    - cron: '40 21 * * 1-5'   # 06:40 KST 화~토
+    - cron: '40 23 * * 0-4'   # 08:40 KST 월~금
+    - cron: '13 10 * * 1-5'   # 19:13 KST 월~금  큰손
+  push:
+    branches: [main]
+    paths: ['public/**']
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'all / inav / whale / deploy'
+        default: all
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: update
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: 이전 데이터·캐시 불러오기
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .cache
+            .data
+          key: state-${{ github.run_id }}
+          restore-keys: state-
+
+      - name: 무엇을 돌릴지 정하기
+        id: what
+        run: |
+          J="${{ github.event.inputs.job }}"
+          S="${{ github.event.schedule }}"
+          if [ -n "$J" ]; then echo "job=$J" >> $GITHUB_OUTPUT
+          elif [ "$S" = "13 10 * * 1-5" ]; then echo "job=whale" >> $GITHUB_OUTPUT
+          elif [ -n "$S" ]; then echo "job=inav" >> $GITHUB_OUTPUT
+          else echo "job=deploy" >> $GITHUB_OUTPUT; fi
+          mkdir -p .cache .data
+          find .cache -type f -mtime +2 -delete || true
+
+      - name: 밤 추정(iNAV) 계산
+        if: steps.what.outputs.job == 'inav' || steps.what.outputs.job == 'all' || (steps.what.outputs.job == 'deploy' && hashFiles('.data/meta.json') == '')
+        env: { CACHE_DIR: '../.cache', OUT_DIR: '../.data' }
+        working-directory: engine
+        run: timeout 1200 node run_all.mjs 150 2>&1 | grep -v EHPA | tail -3
+
+      - name: 큰손 데이터 계산
+        if: steps.what.outputs.job == 'whale' || steps.what.outputs.job == 'all' || (steps.what.outputs.job == 'deploy' && hashFiles('.data/whale.json') == '')
+        env: { CACHE_DIR: '../.cache', OUT_DIR: '../.data' }
+        working-directory: engine
+        run: timeout 1200 node whale.mjs 2>&1 | grep -v EHPA | tail -3
+
+      - name: 사이트 파일 모으기
+        run: |
+          rm -rf _site && cp -r public _site && mkdir -p _site/data
+          cp .data/*.json _site/data/ 2>/dev/null || true
+          ls -la _site/data
+
+      - name: 데이터·캐시 저장
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .cache
+            .data
+          key: state-${{ github.run_id }}
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: _site }
+      - id: deploy
+        uses: actions/deploy-pages@v4

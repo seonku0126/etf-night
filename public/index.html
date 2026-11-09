@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f1115">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="description" content="국내 상장 해외 ETF의 밤사이 추정 가치(iNAV), 외국인·기관 큰손 동향, 자금 유입 순위">
+<link rel="icon" href="icon.svg">
+<title>ETF 밤 시세</title>
+<style>
+:root{--bg:#0f1115;--card:#181b22;--line:#262a33;--ink:#eef0f4;--mute:#8a919e;--up:#ff5a5f;--down:#4e8cff;--acc:#f5c542}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",sans-serif}
+header{position:sticky;top:0;background:var(--bg);padding:14px 16px 0;z-index:5;border-bottom:1px solid var(--line)}
+h1{font-size:19px;margin:0 0 2px}
+.sub{color:var(--mute);font-size:12.5px}
+.search{margin-top:10px;position:relative}
+.search input{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:15px;outline:none}
+.results{position:absolute;left:0;right:0;top:46px;background:var(--card);border:1px solid var(--line);border-radius:12px;max-height:60vh;overflow:auto;display:none;z-index:9}
+.results div{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+.results div:last-child{border-bottom:0}
+.results small{color:var(--mute)}
+.tabs{display:flex;gap:4px;margin-top:10px}
+.tabs button{flex:1;background:none;border:0;color:var(--mute);font-size:15px;font-weight:600;padding:10px 0 11px;border-bottom:2px solid transparent}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--acc)}
+main{padding:12px 16px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
+.hrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.name{font-weight:600;font-size:15px}
+.code{color:var(--mute);font-size:12px;margin-left:4px}
+.big{font-size:24px;font-weight:700;letter-spacing:-.3px}
+.pct{font-weight:700}
+.up{color:var(--up)}.down{color:var(--down)}.flat{color:var(--mute)}
+.meta{color:var(--mute);font-size:12.5px;margin-top:4px}
+.chip{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mute);margin-top:6px}
+button.x{background:none;border:0;color:var(--mute);font-size:13px;padding:4px}
+.detail table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13.5px}
+.detail td{padding:6px 0;border-bottom:1px solid var(--line)}
+.detail td:last-child{text-align:right}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.kv div{background:#13161c;border-radius:10px;padding:8px 10px}
+.kv b{display:block;font-size:15px}
+.kv span{color:var(--mute);font-size:12px}
+.back{color:var(--acc);background:none;border:0;font-size:14px;padding:0;margin-bottom:8px}
+.empty{color:var(--mute);text-align:center;padding:30px 0}
+.skel{color:var(--mute)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 12px}
+.cat b{display:block;font-size:15px}
+.cat span{color:var(--mute);font-size:12.5px}
+.cat .pct{font-size:12.5px}
+.seg{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:0 0 auto;background:var(--card);border:1px solid var(--line);color:var(--mute);border-radius:999px;padding:7px 12px;font-size:13.5px}
+.seg button.on{background:var(--ink);color:#111;border-color:var(--ink);font-weight:600}
+.list{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.li{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line)}
+.li:last-child{border-bottom:0}
+.li .no{width:22px;color:var(--mute);font-size:13px;font-weight:600;text-align:center;flex:0 0 auto}
+.li .l{flex:1;min-width:0}
+.li .nm{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li .s{color:var(--mute);font-size:12px}
+.li .r{text-align:right;flex:0 0 auto}
+.li .v{font-size:14.5px;font-weight:600}
+.li .p{font-size:12.5px;font-weight:600}
+.note{color:var(--mute);font-size:12px;margin:2px 2px 10px}
+.bar{display:flex;height:10px;border-radius:6px;overflow:hidden;margin:14px 0 8px;background:#13161c}
+.bar i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--mute)}
+.legend b{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.btn{width:100%;padding:12px;border-radius:12px;border:1px dashed var(--line);background:none;color:var(--acc);font-size:15px;font-weight:600;margin-top:10px}
+.form{background:var(--card);border:1px solid var(--acc);border-radius:16px;padding:14px;margin-bottom:10px}
+.form input{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:#13161c;color:var(--ink);font-size:16px;margin-top:6px;outline:none}
+.form label{display:block;color:var(--mute);font-size:12px;margin-top:10px}
+.form .acts{display:flex;gap:8px;margin-top:14px}
+.form .acts button{flex:1;padding:11px;border-radius:10px;border:0;font-weight:600;font-size:15px}
+.pick{max-height:220px;overflow:auto;margin-top:6px;border:1px solid var(--line);border-radius:10px;display:none}
+.pick div{padding:9px 10px;border-bottom:1px solid var(--line);font-size:14px;display:flex;justify-content:space-between}
+.pick small{color:var(--mute)}
+.sumrow{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;font-size:14px}
+.sumrow span:first-child{color:var(--mute)}
+.scan .li{padding:10px 12px}
+.scan input[type=checkbox]{width:20px;height:20px;accent-color:var(--acc);flex:0 0 auto}
+.btn2{display:flex;gap:8px;margin-top:12px}
+.btn2 button{flex:1;padding:11px;border-radius:10px;border:0;font-weight:600;font-size:14.5px}
+.list .ed{display:flex;flex-direction:column;gap:6px;margin-left:10px}
+.list .ed button{min-width:60px;border:0;border-radius:8px;padding:6px 10px;font-size:12.5px;font-weight:600;background:var(--line);color:var(--ink)}
+.list .ed .del{background:#3a1f22;color:var(--up)}
+.undo{display:flex;align-items:center;justify-content:space-between;background:#22324a;color:#cfe3ff;border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:14px}
+.undo button{border:0;background:none;color:var(--acc);font-weight:700;font-size:14px}
+.seg.wrap{flex-wrap:wrap}
+.seg.sm button{font-size:13px;padding:6px 12px}
+.tgs{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.tg{font-size:11.5px;padding:2px 7px;border-radius:6px;background:var(--line)}
+.tg.up{background:rgba(255,90,90,.15);color:var(--up)}.tg.down{background:rgba(80,150,255,.15);color:var(--down)}.tg.acc{background:rgba(245,196,66,.15);color:var(--acc)}
+.wb{display:flex;align-items:center;gap:8px;margin-top:8px}.wbl{width:58px;font-size:12px;color:var(--mute)}
+.wbr{flex:1;display:flex;gap:3px}
+.wc{flex:1;display:flex;flex-direction:column}.wt,.wd{height:36px;display:flex}.wt{align-items:flex-end;border-bottom:1px solid var(--line)}.wd{align-items:flex-start}
+.wc i{display:block;width:100%;border-radius:2px}.wc i.up{background:var(--up)}.wc i.down{background:var(--down)}
+.ad{margin-top:14px;border:1px dashed var(--line);border-radius:14px;padding:10px 12px;text-align:center}
+.ad .disc{color:var(--mute);font-size:11px;margin-bottom:6px;text-align:left}
+.ad .slot{color:var(--mute);font-size:12.5px;padding:18px 0}
+.ttl{display:flex;justify-content:space-between;align-items:baseline;margin:2px 2px 10px}
+.ttl b{font-size:17px}
+footer{color:var(--mute);font-size:11.5px;padding:0 16px 30px;line-height:1.6}
+</style>
+</head>
+<body>
+<header>
+  <h1>ETF 밤 시세</h1>
+  <div class="sub" id="status">불러오는 중…</div>
+  <div class="search"><input id="q" placeholder="ETF 이름이나 종목코드 검색" autocomplete="off"><div class="results" id="res"></div></div>
+  <div class="tabs"><button data-t="fav">관심</button><button data-t="cats">카테고리</button><button data-t="rank">순위</button><button data-t="whale">🐋 큰손</button></div>
+</header>
+<main id="main"><div class="empty">불러오는 중…</div></main>
+<footer>추정치이며 투자 권유가 아닙니다. 마감 iNAV, 구성종목 비중, 미국 시세, 원/달러 환율로 계산합니다. 미국 정규장이 닫혀 있을 때 큰 숫자는 지수 선물 움직임까지 반영한 값입니다. 밤 추정은 시가총액 상위 150개만 계산하고, 거래대금·등락률은 한국 장 기준, 외국인 순매수는 전 거래일 기준입니다.</footer>
+<script>
+const $=s=>document.querySelector(s);
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let favs=store.get('favs',['133690','360750','381180']);
+let META=null,DET={},LIST=[],DATA={};
+let view={name:(t=>t==='pf'?'cats':t)(store.get('tab','cats'))},rankKey='nightUp',catSort='cap';
+// ---------- 쿠팡 파트너스 광고 자리: 승인 후 받은 배너 코드를 AD_HTML에 넣으면 표시됨 ----------
+const AD_HTML='';
+const adSlot=()=>`<div class="ad"><div class="disc">이 영역은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</div>${AD_HTML||'<div class="slot">광고 자리 (쿠팡 파트너스 승인 후 표시)</div>'}</div>`;
+const won=v=>v==null?'-':Math.round(v).toLocaleString('ko-KR')+'원';
+const sign=v=>v==null?'':(v>0?'+':'')+v.toFixed(2)+'%';
+const cls=v=>v==null?'flat':v>0.005?'up':v<-0.005?'down':'flat';
+const hm=iso=>{if(!iso)return'-';const d=new Date(iso);return d.toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false})};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const eok=v=>v==null?'-':(Math.abs(v)>=1e4?(v/1e4).toFixed(1)+'조':Math.round(v).toLocaleString('ko-KR')+'억');
+
+// ---------- 카테고리 (이름 규칙, 위에서부터 먼저 맞는 것) ----------
+const CATS=[
+ ['lev','레버리지·인버스',/레버리지|인버스|2X|곱버스/i],
+ ['cc','커버드콜·월배당',/커버드콜|프리미엄|인컴|월배당|타겟데일리/],
+ ['ndx','나스닥100',/나스닥100|NASDAQ100|나스닥 100/i],
+ ['spx','S&P500',/S&P500|S&P 500|S&P/],
+ ['div','배당',/배당|다우존스|SCHD|리츠|REIT/i],
+ ['semi','반도체',/반도체|HBM|DRAM|메모리|필라델피아/],
+ ['power','전력·원자력·에너지',/전력|원자력|SMR|에너지|우라늄|인프라|유틸리티/],
+ ['space','우주·방산',/우주|방산|항공|조선/],
+ ['ai','AI·테크',/AI|테크|빅테크|소프트웨어|클라우드|사이버|데이터센터|양자|로봇|휴머노이드|TOP10|TOP7|FANG|나스닥|플랫폼|메타버스|자율주행|전기차|2차전지|리튬|혁신/i],
+ ['health','헬스케어·바이오',/헬스|바이오|의료|비만|제약/],
+ ['china','중국·홍콩',/차이나|중국|항셍|CSI|홍콩/],
+ ['world','인도·일본·글로벌',/인도|일본|니케이|베트남|대만|유럽|독일|글로벌|선진국|MSCI|신흥|아시아|멕시코|브라질/i],
+ ['gold','금·원자재',/골드|금현물|금선물|국제금|금채굴|은선물|원유|구리|원자재|농산물|천연가스/],
+ ['etc','기타',/./],
+];
+const catOf=n=>{for(const [k,,re] of CATS) if(re.test(n)) return k; return 'etc'};
+const catName=k=>(CATS.find(c=>c[0]===k)||[])[1]||k;
+
+// ---------- 데이터 ----------
+function load(code){if(DET[code])DATA[code]={...DET[code],code};else if(META)DATA[code]={error:'이 ETF는 아직 밤 추정 목록(시가총액 상위 150개)에 없어요',code};}
+const M=code=>LIST.find(x=>x.code===code)||{};
+
+// ---------- 공통 목록 줄 ----------
+function li(x,i,right){
+  const r=right||(x.est!=null?{v:won(x.est),p:x.pct,lab:'밤 예상'}:{v:won(x.price),p:x.ch,lab:'오늘'});
+  return `<div class="li" onclick="openD('${x.code}')">${i!=null?`<div class="no">${i+1}</div>`:''}
+   <div class="l"><div class="nm">${esc(x.name)}</div><div class="s">${x.code}${x.cap?` · 시총 ${eok(x.cap)}`:''}</div></div>
+   <div class="r"><div class="v">${r.v}</div><div class="p ${cls(r.p)}">${r.lab?`<span class="s" style="font-weight:400">${r.lab} </span>`:''}${sign(r.p)}</div></div></div>`;
+}
+
+
+// ---------- 내 잔고 (계정에 저장, 실패하면 이 기기에만) ----------
+let PF=store.get('pf',{items:[],cash:0}),pfDoc=null,pfSaving=Promise.resolve(),pfForm=null;
+const PAL=['#f5c542','#5ab0ff','#ff7a7a','#7ee2a8','#c39bff','#ffa25c','#5fd4d4','#e58ad8','#9aa3b2'];
+const sw=v=>(v>0?'+':v<0?'−':'')+Math.abs(Math.round(v)).toLocaleString('ko-KR')+'원';
+function priceNow(code){const m=M(code);return m.est!=null?{px:m.est,src:'밤 추정'}:{px:m.price,src:'종가'}}
+function persist(){store.set('pf',PF);if(pfDoc){const data={items:PF.items,cash:+PF.cash||0,updatedAt:new Date().toISOString()};pfSaving=pfSaving.then(()=>pfDoc.set(data)).catch(()=>{pfDoc=null})}}
+function pfView(){
+  if(pfForm)return formView();
+  const rows=PF.items.map((it,i)=>{const m=M(it.code),pn=priceNow(it.code),px=pn.px||it.avg,last=(m.price||px);
+    return {...it,i,m,src:pn.src,val:px*it.qty,cost:it.avg*it.qty,night:(px-last)*it.qty}}).sort((a,b)=>b.val-a.val);
+  const cash=+PF.cash||0,stock=rows.reduce((a,r)=>a+r.val,0),total=stock+cash,cost=rows.reduce((a,r)=>a+r.cost,0);
+  const pnl=stock-cost,night=rows.reduce((a,r)=>a+r.night,0),lastTotal=total-night;
+  const segs=rows.map((r,k)=>({n:r.m.name||r.code,w:total?r.val/total:0,c:PAL[k%PAL.length]})).concat(cash>0?[{n:'예수금',w:cash/total,c:'#3a3f4b'}]:[]);
+  const sum=`<div class="card">
+    <div class="meta" style="margin-top:0">내 잔고 · 추정</div>
+    <div class="big" style="font-size:30px">${won(total)}</div>
+    <div class="sumrow"><span>오늘 밤 예상 변동</span><span class="pct ${cls(night)}">${sw(night)} (${sign(lastTotal?night/lastTotal*100:0)})</span></div>
+    <div class="sumrow"><span>총 손익 (투자원금 ${won(cost)})</span><span class="pct ${cls(pnl)}">${sw(pnl)} (${sign(cost?pnl/cost*100:0)})</span></div>
+    ${total?`<div class="bar">${segs.map(g=>`<i style="width:${(g.w*100).toFixed(2)}%;background:${g.c}"></i>`).join('')}</div>
+    <div class="legend">${segs.map(g=>`<span><b style="background:${g.c}"></b>${esc(g.n.replace(/^(TIGER|KODEX|ACE|RISE|SOL|TIME|PLUS|KIWOOM|HANARO|KoAct|WON) /,''))} ${(g.w*100).toFixed(1)}%</span>`).join('')}</div>`:''}
+  </div>`;
+  const cashRow=`<div class="li" onclick="openCash()"><div class="l"><div class="nm">예수금</div><div class="s">눌러서 수정</div></div><div class="r"><div class="v">${won(cash)}</div></div></div>`;
+  const list=rows.length?`<div class="list">${rows.map(r=>`<div class="li" onclick="openForm(${r.i})">
+     <div class="l"><div class="nm">${esc(r.m.name||r.code)}</div><div class="s">${r.qty.toLocaleString('ko-KR')}주 · 평균 ${won(r.avg)} · ${r.src} ${won(r.val/r.qty)}</div></div>
+     <div class="r"><div class="v">${won(r.val)}</div><div class="p ${cls(r.val-r.cost)}">${sign(r.cost?(r.val-r.cost)/r.cost*100:0)}</div></div>
+     <div class="ed"><button onclick="event.stopPropagation();openForm(${r.i})">수정</button><button class="del" onclick="event.stopPropagation();delItem(${r.i})">삭제</button></div></div>`).join('')}
+     ${cashRow}</div>`
+    :`<div class="empty">보유한 ETF를 추가하면 잔고를 계산해 드려요</div><div class="list">${cashRow}</div>`;
+  const ub=undo?`<div class="undo"><span>${esc(M(undo.it.code).name||undo.it.code)} 삭제됨</span><button onclick="undoDel()">되돌리기</button></div>`:'';
+  return ub+sum+list+`
+    <button class="btn" onclick="openForm(null)">+ 종목 추가</button>
+    <div class="note" style="margin-top:10px">가격은 밤 추정값(시가총액 상위 150개) 또는 마지막 종가를 써요. ${pfDoc?'Claude 계정에 저장돼 다른 기기에서도 보여요.':'이 기기에만 저장돼요.'}</div>`+adSlot();
+}
+function formView(){
+  if(pfForm.mode==='cash')return `<div class="form"><b>예수금</b><label>금액(원)</label><input id="f_cash" type="number" inputmode="numeric" value="${PF.cash||''}">
+    <div class="acts"><button style="background:var(--line);color:var(--ink)" onclick="closeForm()">취소</button><button style="background:var(--acc);color:#111" onclick="saveCash()">저장</button></div></div>`;
+  const m=M(pfForm.code);
+  return `<div class="form"><b>${pfForm.idx!=null?'종목 수정':'종목 추가'}</b>
+    <label>ETF</label><input id="f_q" placeholder="이름이나 종목코드" value="${esc(m.name||'')}" oninput="pickList(this.value)" autocomplete="off"><div class="pick" id="f_pick"></div>
+    <label>보유 수량(주)</label><input id="f_qty" type="number" inputmode="decimal" value="${pfForm.qty||''}">
+    <label>평균 매수가(원)</label><input id="f_avg" type="number" inputmode="decimal" value="${pfForm.avg||''}">
+    <div class="meta" id="f_msg"></div>
+    <div class="acts"><button style="background:var(--line);color:var(--ink)" onclick="closeForm()">취소</button>${pfForm.idx!=null?`<button style="background:#3a1f22;color:var(--up)" onclick="delItem(${pfForm.idx})">삭제</button>`:''}<button style="background:var(--acc);color:#111" onclick="saveForm()">저장</button></div></div>`;
+}
+function openForm(i){const it=i!=null?PF.items[i]:null;pfForm={idx:i,code:it?it.code:'',qty:it?it.qty:'',avg:it?it.avg:''};render();scrollTo(0,0)}
+function closeForm(){pfForm=null;render()}
+function openCash(){pfForm={mode:'cash'};render();scrollTo(0,0)}
+function pickList(q){const box=$('#f_pick');q=q.trim().toLowerCase().replace(/\s/g,'');if(!q){box.style.display='none';return}
+  const hit=LIST.filter(x=>x.code.toLowerCase().includes(q)||x.name.toLowerCase().replace(/\s/g,'').includes(q)).slice(0,20);
+  box.innerHTML=hit.map(x=>`<div onclick="pickIt('${x.code}')"><span>${esc(x.name)}</span><small>${won(x.price)}</small></div>`).join('')||'<div><small>검색 결과가 없어요</small></div>';box.style.display='block'}
+function pickIt(code){pfForm.code=code;const m=M(code);$('#f_q').value=m.name;$('#f_pick').style.display='none';if(!$('#f_avg').value)$('#f_avg').value=m.price||''}
+function saveForm(){const qty=+$('#f_qty').value,avg=+$('#f_avg').value;
+  if(!pfForm.code){$('#f_msg').textContent='ETF를 목록에서 골라주세요';return}
+  if(!(qty>0)||!(avg>0)){$('#f_msg').textContent='수량과 평균 매수가를 넣어주세요';return}
+  const it={code:pfForm.code,qty,avg};
+  if(pfForm.idx!=null)PF.items[pfForm.idx]=it;else{const j=PF.items.findIndex(x=>x.code===it.code);if(j>=0){const o=PF.items[j],q2=o.qty+qty;PF.items[j]={code:it.code,qty:q2,avg:(o.avg*o.qty+avg*qty)/q2}}else PF.items.push(it)}
+  persist();pfForm=null;render()}
+function saveCash(){PF.cash=Math.max(0,+$('#f_cash').value||0);persist();pfForm=null;render()}
+let undo=null,undoT=null;
+function delItem(i){const it=PF.items[i];if(!it)return;PF.items.splice(i,1);persist();pfForm=null;undo={it,i};clearTimeout(undoT);undoT=setTimeout(()=>{undo=null;render()},5000);render()}
+function undoDel(){if(!undo)return;PF.items.splice(Math.min(undo.i,PF.items.length),0,undo.it);undo=null;clearTimeout(undoT);persist();render()}
+
+
+// ---------- 화면 ----------
+function favView(){return (favs.length?favs.map(c=>(load(c),card(c))).join(''):'<div class="empty">ETF를 검색하거나 카테고리에서 골라 담아보세요</div>')+adSlot()}
+function catsView(){
+  const g={};for(const x of LIST)(g[x.cat]=g[x.cat]||[]).push(x);
+  return `<div class="note">분류를 누르면 시가총액 순으로 쭉 볼 수 있어요</div><div class="grid">`+CATS.filter(c=>g[c[0]]).map(([k,n])=>{
+    const xs=g[k],ok=xs.filter(x=>x.pct!=null),avg=ok.length?ok.reduce((a,x)=>a+x.pct,0)/ok.length:null;
+    return `<div class="cat" onclick="openCat('${k}')"><b>${n}</b><span>${xs.length}개</span>${avg!=null?` <span class="pct ${cls(avg)}">밤 예상 평균 ${sign(avg)}</span>`:''}</div>`}).join('')+'</div>'+adSlot();
+}
+function catView(k){
+  let xs=LIST.filter(x=>x.cat===k);
+  const S={cap:(a,b)=>(b.cap||0)-(a.cap||0),night:(a,b)=>(b.pct??-1e9)-(a.pct??-1e9),today:(a,b)=>(b.ch??-1e9)-(a.ch??-1e9),amt:(a,b)=>(b.amt||0)-(a.amt||0)};
+  xs=xs.slice().sort(S[catSort]);
+  const seg=[['cap','시가총액'],['night','밤 예상 등락'],['today','오늘 등락'],['amt','거래대금']].map(([k2,n])=>`<button class="${catSort===k2?'on':''}" onclick="catSort='${k2}';render()">${n}</button>`).join('');
+  return `<button class="back" onclick="go('cats')">← 카테고리</button><div class="ttl"><b>${catName(k)}</b><span class="s">${xs.length}개</span></div><div class="seg">${seg}</div><div class="list">${xs.map((x,i)=>li(x,null,catSort==='today'?{v:won(x.price),p:x.ch,lab:'오늘'}:catSort==='amt'?{v:eok(x.amt/100),p:x.ch,lab:'오늘'}:null)).join('')}</div>${adSlot()}`;
+}
+const RANKS=[
+ ['nightUp','밤 예상 상승',x=>x.pct,1,x=>({v:won(x.est),p:x.pct,lab:''})],
+ ['nightDown','밤 예상 하락',x=>x.pct,-1,x=>({v:won(x.est),p:x.pct,lab:''})],
+ ['amt','거래대금',x=>x.amt,1,x=>({v:eok(x.amt/100),p:x.ch,lab:'오늘'})],
+ ['fbuy','외국인 순매수',x=>x.fb,1,x=>({v:(x.fb>0?'+':'')+eok(x.fb),p:x.ch,lab:'오늘'})],
+ ['fsell','외국인 순매도',x=>x.fb,-1,x=>({v:eok(x.fb),p:x.ch,lab:'오늘'})],
+ ['todayUp','오늘 급상승',x=>x.ch,1,x=>({v:won(x.price),p:x.ch,lab:''})],
+ ['todayDown','오늘 급하락',x=>x.ch,-1,x=>({v:won(x.price),p:x.ch,lab:''})],
+];
+function rankView(){
+  const [k,n,f,dir,right]=RANKS.find(r=>r[0]===rankKey);
+  let xs=LIST.filter(x=>f(x)!=null&&!(k.startsWith('night')&&x.w));
+  xs=xs.sort((a,b)=>dir*(f(b)-f(a))).slice(0,50);
+  if(k==='fsell')xs=xs.filter(x=>x.fb<0); if(k==='fbuy')xs=xs.filter(x=>x.fb>0);
+  const fbd=(LIST.find(x=>x.fbd)||{}).fbd;
+  const note={nightUp:'밤 추정 대상(상위 150개) 중 마감 iNAV 대비 예상 등락',nightDown:'밤 추정 대상(상위 150개) 중 마감 iNAV 대비 예상 등락',amt:'오늘 한국 장 거래대금',fbuy:`외국인 순매수 금액 (${fbd?fbd.slice(4,6)+'/'+fbd.slice(6):''} 기준)`,fsell:`외국인 순매도 금액 (${fbd?fbd.slice(4,6)+'/'+fbd.slice(6):''} 기준)`,todayUp:'오늘 한국 장 등락률',todayDown:'오늘 한국 장 등락률'}[k];
+  const seg=RANKS.map(r=>`<button class="${rankKey===r[0]?'on':''}" onclick="rankKey='${r[0]}';render()">${r[1]}</button>`).join('');
+  return `<div class="seg">${seg}</div><div class="note">${note} · 상위 ${xs.length}개</div><div class="list">${xs.map((x,i)=>li(x,i,right(x))).join('')||'<div class="empty">데이터가 없어요</div>'}</div>${adSlot()}`;
+}
+function card(code){
+  const d=DATA[code],m=LIST.find(x=>x.code===code)||{};
+  if(!d)return`<div class="card" onclick="openD('${code}')"><div class="hrow"><span class="name">${esc(m.name||code)}<span class="code">${code}</span></span></div><div class="skel">계산 중…</div></div>`;
+  if(d.error)return`<div class="card"><div class="hrow"><span class="name">${esc(m.name||code)}<span class="code">${code}</span></span><button class="x" onclick="unfav('${code}',event)">삭제</button></div><div class="meta">계산하지 못했어요: ${esc(d.error)}</div></div>`;
+  return`<div class="card" onclick="openD('${code}')">
+   <div class="hrow"><span class="name">${esc(d.name)}<span class="code">${code}</span></span><button class="x" onclick="unfav('${code}',event)">삭제</button></div>
+   <div class="hrow" style="margin-top:6px"><span class="big">${won(d.est)}</span><span class="pct ${cls(d.pct)}">${sign(d.pct)}</span></div>
+   ${d.warn?`<div class="chip" style="color:var(--acc);border-color:var(--acc)">${esc(d.warn)}</div>`:''}
+   <div class="meta">기준값 ${won(d.nav)} (${d.navDate} 마감 iNAV) 대비 · 마지막 종가 ${won(d.price)} 대비 <span class="${cls(d.vsPrice)}">${sign(d.vsPrice)}</span></div>
+   ${d.session==='closed'?`<div class="meta">공식 iNAV 방식(정규장 종가) ${won(d.estReg)} <span class="${cls(d.pctReg)}">${sign(d.pctReg)}</span>${d.inavLive?` · 지금 공식 iNAV ${won(d.inavLive)}`:''}</div>`:''}
+   <div class="meta">미국 시세 ${hm(d.pricedAt)} · ${esc(d.method)}${d.check?` · 어제 추정 오차 ${(d.check.errBp/100>0?'+':'')+(d.check.errBp/100).toFixed(2)}%`:''}</div></div>`;
+}
+function detail(code){
+  const d=DATA[code];
+  if(!d)return'<div class="empty">계산 중…</div>';
+  if(d.error)return`<button class="back" onclick="home()">← 목록</button><div class="card">계산하지 못했어요: ${esc(d.error)}</div>`;
+  const rows=(d.top||[]).map(x=>`<tr><td>${esc(x.n||x.t)} <span class="code">${esc(x.t)}</span></td><td>${x.w.toFixed(1)}%</td><td class="${cls(x.r)}">${sign(x.r)}</td></tr>`).join('');
+  return`<button class="back" onclick="home()">← 목록</button>
+  <div class="card detail">
+   <div class="name">${esc(d.name)}<span class="code">${d.code}</span></div>
+   <div class="hrow" style="margin-top:8px"><span class="big">${won(d.est)}</span><span class="pct ${cls(d.pct)}">${sign(d.pct)}</span></div>
+   <div class="meta">${d.navDate} 마감 iNAV ${won(d.nav)} 대비 추정 등락${d.session==='closed'?' · 선물 움직임 반영(예상 시가에 가까운 값)':''}</div>
+   ${d.session==='closed'?`<div class="kv">
+    <div><span>공식 iNAV 방식(정규장 종가)</span><b>${won(d.estReg)} <small class="${cls(d.pctReg)}">${sign(d.pctReg)}</small></b></div>
+    <div><span>애프터·프리마켓 가격 반영</span><b>${won(d.estAh)} <small class="${cls(d.pctAh)}">${sign(d.pctAh)}</small></b></div>
+    ${d.inavLive?`<div><span>지금 공식 iNAV</span><b>${won(d.inavLive)}</b></div>`:''}
+    <div><span>${d.futSym==='NQ=F'?'나스닥100':d.futSym==='ES=F'?'S&amp;P500':'다우'} 선물(정규장 마감 후)</span><b class="${cls(d.futPct)}">${sign(d.futPct)}</b></div>
+   </div>`:''}
+   ${(d.notes||[]).map(n=>`<div class="meta">· ${esc(n)}</div>`).join('')}
+   <div class="kv">
+    <div><span>미국 자산 등락(달러)</span><b class="${cls(d.rUsd)}">${sign(d.rUsd)}</b></div>
+    <div><span>환율 효과${d.hedged?' (환헤지)':''}</span><b class="${cls(d.fxPct)}">${sign(d.fxPct)}</b></div>
+    <div><span>지금 원/달러</span><b>${d.fxNow?d.fxNow.toFixed(1):'-'}</b></div>
+    <div><span>기준값에 쓰인 환율(${d.fxDate||'-'} 15:30)</span><b>${d.fxBase?d.fxBase.toFixed(1):'-'}</b></div>
+    <div><span>마지막 종가 대비</span><b class="${cls(d.vsPrice)}">${sign(d.vsPrice)}</b></div>
+    <div><span>시세 반영 비중</span><b>${d.method.startsWith('지수')?'지수 사용':d.coverage+'%'}</b></div>
+    <div><span>어제 같은 방식 추정 오차</span><b>${d.check?(d.check.errBp/100>0?'+':'')+(d.check.errBp/100).toFixed(2)+'%':'-'}</b></div>
+    <div><span>어제 추정 / 실제 NAV</span><b>${d.check?won(d.check.guess)+' / '+won(d.nav):'-'}</b></div>
+   </div>
+   <div class="chip">${esc(d.method)} · 구성종목 ${d.nHold}개 · 원화 ${d.wKrw}%</div>
+   <div class="chip">미국 시세 ${hm(d.pricedAt)} · 계산 ${hm(d.at)}</div>
+   ${rows?`<table><tr><td class="meta">많이 움직인 종목</td><td class="meta">비중</td><td class="meta">등락</td></tr>${rows}</table>`:''}
+  </div>`;
+}
+
+
+// ---------- 큰손 추적 ----------
+function applyWH(){if(!WH)return;for(const x of LIST){const w=WH.items[x.code];if(w&&w.f1!=null){x.fb=w.f1;x.fbd=WH.day}}}
+let WH=null,whKey='flow',whPer='1';
+const ek=v=>v==null?'-':(v>0?'+':'')+(Math.abs(v)>=1e4?(v/1e4).toFixed(2)+'조':Math.abs(v)>=10?Math.round(v).toLocaleString('ko-KR')+'억':v.toFixed(1)+'억');
+const md=d=>d?(+d.slice(4,6))+'/'+(+d.slice(6)):'';
+const WHK=[
+ ['flow','💰 자금 유입','설정·환매로 실제 새로 들어온 돈 (순자산 변화 − 수익)',w=>w['fl'+whPer],1],
+ ['out','💸 자금 유출','환매로 빠져나간 돈',w=>w['fl'+whPer],-1],
+ ['fbuy','🌏 외국인 매수','외국인 순매수 금액',w=>w['f'+whPer],1],
+ ['fsell','🌏 외국인 매도','외국인 순매도 금액',w=>w['f'+whPer],-1],
+ ['obuy','🏦 기관 매수','기관 순매수 금액',w=>w['o'+whPer],1],
+ ['osell','🏦 기관 매도','기관 순매도 금액',w=>w['o'+whPer],-1],
+ ['fstreak','🔥 외국인 연속','외국인 연속 순매수 일수',w=>w.fs,1],
+ ['ostreak','🔥 기관 연속','기관 연속 순매수 일수',w=>w.os,1],
+ ['flstreak','🔥 유입 연속','자금 연속 유입 일수',w=>w.fls,1],
+ ['vol','⚡ 거래 폭증','오늘 거래량 ÷ 최근 20일 평균 (거래대금 10억 이상)',w=>w.vx,1],
+];
+function whTags(w){const t=[];
+  if(w.fs>=3)t.push(`<span class="tg up">외인 ${w.fs}일 연속 매수</span>`);else if(w.fs<=-3)t.push(`<span class="tg down">외인 ${-w.fs}일 연속 매도</span>`);
+  if(w.os>=3)t.push(`<span class="tg up">기관 ${w.os}일 연속 매수</span>`);else if(w.os<=-3)t.push(`<span class="tg down">기관 ${-w.os}일 연속 매도</span>`);
+  if(w.fls>=3)t.push(`<span class="tg up">자금 ${w.fls}일 연속 유입</span>`);else if(w.fls<=-3)t.push(`<span class="tg down">자금 ${-w.fls}일 연속 유출</span>`);
+  if(w.vx>=3)t.push(`<span class="tg acc">거래량 ${w.vx}배</span>`);return t.join('')}
+function whaleView(){
+  if(!WH)return '<div class="empty">큰손 데이터를 불러오는 중…</div>';
+  const [k,n,note,f,dir]=WHK.find(r=>r[0]===whKey);const I=WH.items;
+  let xs=LIST.filter(x=>I[x.code]&&f(I[x.code])!=null);
+  if(k==='vol')xs=xs.filter(x=>(x.amt||0)>=1000);
+  xs=xs.filter(x=>dir*f(I[x.code])>0).sort((a,b)=>dir*(f(I[b.code])-f(I[a.code]))).slice(0,50);
+  const isStreak=k.includes('streak'),isVol=k==='vol';
+  const seg=WHK.map(r=>`<button class="${whKey===r[0]?'on':''}" onclick="whKey='${r[0]}';render()">${r[1]}</button>`).join('');
+  const per=(isStreak||isVol)?'':`<div class="seg sm">${[['1','하루'],['5','5일'],['20','20일']].map(([v,l])=>`<button class="${whPer===v?'on':''}" onclick="whPer='${v}';render()">${l}</button>`).join('')}</div>`;
+  const day=k.startsWith('f')&&!k.startsWith('fl')||k.startsWith('o')||k==='fstreak'||k==='ostreak'?md(WH.day):md(WH.day);
+  const rows=xs.map((x,i)=>{const w=I[x.code],v=f(w);
+    const main=isStreak?`${v}일`:isVol?`${v}배`:ek(v);
+    const sub=isVol?`오늘 거래대금 ${eok(x.amt/100)}`:`외인 ${ek(w.f1)} · 기관 ${ek(w.o1)} · 자금 ${ek(w.fl1)}`;
+    return `<div class="li" onclick="openD('${x.code}')"><div class="no">${i+1}</div>
+      <div class="l"><div class="nm">${esc(x.name)}</div><div class="s">${sub}</div><div class="tgs">${whTags(w)}</div></div>
+      <div class="r"><div class="v ${isVol?'':cls(dir*Math.abs(v)*(dir))}">${main}</div><div class="p ${cls(x.ch)}"><span class="s" style="font-weight:400">오늘 </span>${sign(x.ch)}</div></div></div>`}).join('');
+  return `<div class="seg wrap">${seg}</div>${per}<div class="note">${note}${isStreak||isVol?'':` · ${whPer==='1'?'하루':'최근 '+whPer+'거래일 합계'}`} · ${day} 기준 · 상위 ${xs.length}개</div>
+   <div class="list">${rows||'<div class="empty">해당하는 ETF가 없어요</div>'}</div>
+   <div class="note" style="margin-top:10px">외국인·기관 순매수는 수량 × 그날 종가로 계산한 추정 금액이에요. 자금 유입은 순자산 변화에서 운용 수익을 뺀 값이라 분배금 지급일 등에는 오차가 있어요. 매일 저녁 갱신.</div>${adSlot()}`;
+}
+function whaleBox(c){const w=WH&&WH.items[c];if(!w)return '';
+  const bars=(arr,lab)=>{if(!arr||!arr.length)return '';const mx=Math.max(...arr.map(Math.abs),0.1);
+    return `<div class="wb"><div class="wbl">${lab}</div><div class="wbr">${arr.slice().reverse().map(v=>{const h=Math.max(2,Math.abs(v)/mx*34);return `<div class="wc"><div class="wt">${v>0?`<i class="up" style="height:${h}px"></i>`:''}</div><div class="wd">${v<0?`<i class="down" style="height:${h}px"></i>`:''}</div></div>`}).join('')}</div></div>`};
+  const fo=w.fo||[];
+  return `<div class="card"><b>🐋 큰손 동향</b> <span class="meta">${md(w.d)} 기준</span>
+   <div class="kv" style="margin-top:8px">
+    <div><span>외국인 하루 / 5일 / 20일</span><b>${ek(w.f1)} / ${ek(w.f5)} / ${ek(w.f20)}</b></div>
+    <div><span>기관 하루 / 5일 / 20일</span><b>${ek(w.o1)} / ${ek(w.o5)} / ${ek(w.o20)}</b></div>
+    <div><span>자금 유입 하루 / 5일 / 20일</span><b>${ek(w.fl1)} / ${ek(w.fl5)} / ${ek(w.fl20)}</b></div>
+    <div><span>개인 하루</span><b>${ek(w.i1)}</b></div></div>
+   <div class="tgs" style="margin-top:8px">${whTags(w)||'<span class="meta">눈에 띄는 연속 매매 없음</span>'}</div>
+   <div class="meta" style="margin-top:10px">최근 10거래일 (왼쪽이 과거)</div>
+   ${bars(fo.map(x=>x[0]),'외국인')}${bars(fo.map(x=>x[1]),'기관')}${bars(w.fh,'자금 유입')}</div>`;
+}
+
+function render(){
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===(view.tab||view.name)));
+  let h='';
+  if(!META)h='<div class="empty">불러오는 중…</div>';
+  else if(view.name==='fav')h=favView();
+  else if(view.name==='cats')h=catsView();
+  else if(view.name==='cat')h=catView(view.key);
+  else if(view.name==='rank')h=rankView();
+  else if(view.name==='whale')h=whaleView();
+  else if(view.name==='detail'){
+    load(view.code);const c=view.code,m=M(c),d=DATA[c]||{};
+    const fb=`<button class="x" style="color:var(--acc);float:right;margin-top:-2px" onclick="toggleFav('${c}')">${favs.includes(c)?'★ 관심 해제':'☆ 관심 담기'}</button>`;
+    const info=`<div class="kv">
+      <div><span>오늘 종가</span><b>${won(m.price)} <small class="${cls(m.ch)}">${sign(m.ch)}</small></b></div>
+      <div><span>오늘 거래대금</span><b>${eok(m.amt/100)}</b></div>
+      <div><span>외국인 순매수(${m.fbd?m.fbd.slice(4,6)+'/'+m.fbd.slice(6):'-'})</span><b class="${cls(m.fb)}">${m.fb==null?'-':(m.fb>0?'+':'')+eok(m.fb)}</b></div>
+      <div><span>시가총액 · 분류</span><b>${eok(m.cap)} · ${catName(m.cat)}</b></div></div>`;
+    if(d.error) h=`<button class="back" onclick="back()">← 목록</button>${fb}<div class="card detail"><div class="name">${esc(m.name||c)}<span class="code">${c}</span></div>${info}<div class="meta" style="margin-top:10px">${esc(d.error)}</div></div>`;
+    else h=detail(c).replace('onclick="home()">← 목록</button>','onclick="back()">← 목록</button>'+fb).replace('<div class="kv">',info+'<div class="kv">');
+  }
+  if(view.name==='detail')h+=whaleBox(view.code);
+  $('#main').innerHTML=h;
+}
+let prev=null;
+function go(t){view={name:t};pfForm=null;store.set('tab',t);render();scrollTo(0,0)}
+function openCat(k){view={name:'cat',key:k,tab:'cats'};render();scrollTo(0,0)}
+function openD(code){prev=view;view={name:'detail',code,tab:prev.tab||prev.name};render();scrollTo(0,0)}
+function back(){view=prev&&prev.name!=='detail'?prev:{name:'fav'};render()}
+function home(){back()}
+function unfav(code,e){e.stopPropagation();favs=favs.filter(c=>c!==code);store.set('favs',favs);render()}
+function toggleFav(code){favs=favs.includes(code)?favs.filter(c=>c!==code):[code,...favs];store.set('favs',favs);render()}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.t));
+$('#q').addEventListener('input',e=>{
+  const q=e.target.value.trim().toLowerCase().replace(/\s/g,'');const box=$('#res');
+  if(!q){box.style.display='none';return}
+  const hit=LIST.filter(x=>x.code.toLowerCase().includes(q)||x.name.toLowerCase().replace(/\s/g,'').includes(q)).slice(0,30);
+  box.innerHTML=hit.length?hit.map(x=>`<div onclick="pick('${x.code}')"><span>${esc(x.name)} <small>${x.code}</small></span><small>${won(x.price)}</small></div>`).join(''):'<div><small>검색 결과가 없어요</small></div>';
+  box.style.display='block';
+});
+function pick(code){$('#q').value='';$('#res').style.display='none';openD(code)}
+document.addEventListener('click',e=>{if(!e.target.closest('.search'))$('#res').style.display='none'});
+function status(){if(META){const d=new Date(META.at);$('#status').textContent='밤 추정 '+d.toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false})+' 계산 · 22:40·02:40·06:40·08:40 자동 갱신'}}
+(async()=>{
+  render();
+  const v=()=>'?t='+Math.floor(Date.now()/300000); // 5분 단위 캐시
+  const get=async p=>{try{const r=await fetch('data/'+p+'.json'+v(),{cache:'no-cache'});return r.ok?await r.json():null}catch(e){return null}};
+  async function load(){
+    const [m,w]=await Promise.all([get('meta'),get('whale')]);const ds=m?await Promise.all(Array.from({length:Math.ceil((m.n||0)/50)},(_,k)=>get('d'+k))):[];
+    if(!m){if(!META)$('#status').textContent='데이터를 불러오지 못했어요. 잠시 후 다시 열어주세요';return}
+    META=m;LIST=(META.list||[]).map(x=>({code:x.c,name:x.n,price:x.p,cap:x.cap,ch:x.ch,amt:x.amt,fb:x.fb,fbd:x.fbd,est:x.est,pct:x.pct,pr:x.pr,w:x.w,cat:catOf(x.n)}));
+    if(w)WH=w;DET={};for(const d of ds)if(d&&d.items)Object.assign(DET,d.items);DATA={};
+    applyWH();status();render();
+  }
+  await load();
+  setInterval(()=>{if(document.visibilityState==='visible')load()},300000);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')load()});
+})()
+</script>
+<div style="text-align:center;padding:18px 0 28px;font-size:12px;color:#8a919e"><a href="privacy.html" style="color:#8a919e">개인정보처리방침</a> · 정보 제공 목적이며 투자 권유가 아닙니다</div>
+</body>
+</html>
