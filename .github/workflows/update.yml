@@ -92,3 +92,7 @@ jobs:
         with: { path: _site }
       - id: deploy
         uses: actions/deploy-pages@v4
+
+      - name: 검색엔진에 새 페이지 알리기 (IndexNow · 하루 1번)
+        if: steps.what.outputs.job == 'whale' || steps.what.outputs.job == 'all' || steps.what.outputs.job == 'deploy'
+        run: sleep 30 && node engine/indexnow.mjs _site || true

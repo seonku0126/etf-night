@@ -46,6 +46,7 @@ function related(x) {
   return list.filter((y) => y.c !== x.c && words(y.n).includes(w)).sort((a, b) => (b.cap || 0) - (a.cap || 0)).slice(0, 6);
 }
 
+const CATLINKS = ['leverage:레버리지·인버스','covered-call:커버드콜·월배당','nasdaq100:나스닥100','sp500:S&P500','dividend:배당','semiconductor:반도체','power:전력·원자력','space:우주·방산','ai-tech:AI·테크','healthcare:헬스케어','china:중국·홍콩','global:글로벌','commodity:금·원자재'].map((s) => { const [k, v] = s.split(':'); return `<a href="/c/${k}/">${v}</a>`; }).join('');
 let n = 0;
 const urls = [];
 for (const x of list) {
@@ -87,11 +88,13 @@ ${w ? `<div class="card"><h2>🐋 큰손 동향 <span class="sub">${md(w.d)} 기
 ${top.length ? `<div class="card"><h2>많이 담은 종목</h2><table>${top.map((t) => `<tr><td>${esc(t.n || t.t)}</td><td>${t.w}%</td></tr>`).join('')}</table></div>` : ''}
 <a class="cta" href="/#etf=${x.c}">실시간 화면에서 보기 →</a>
 ${rel.length ? `<div class="card rel"><h2>비슷한 ETF</h2>${rel.map((y) => `<a href="/etf/${y.c}/">${esc(y.n)}</a>`).join('')}</div>` : ''}
-<p class="note">추정치이며 투자 권유가 아닙니다. 밤 예상 가격은 마감 iNAV, 구성종목 비중, 미국 시세, 원/달러 환율로 계산하며 미국 정규장이 닫혀 있을 때는 지수 선물 움직임을 반영합니다. 외국인·기관 금액은 순매수 수량 × 종가로 계산한 추정치입니다. <a href="/privacy.html">개인정보처리방침</a></p>
+<div class="card rel"><h2>분류별 보기</h2>__CATLINKS__</div>
+<p class="note"><a href="/guide/night-price/">밤에 국내 ETF 가격 보는 법</a> · <a href="/guide/inav/">iNAV란?</a><br>추정치이며 투자 권유가 아닙니다. 밤 예상 가격은 마감 iNAV, 구성종목 비중, 미국 시세, 원/달러 환율로 계산하며 미국 정규장이 닫혀 있을 때는 지수 선물 움직임을 반영합니다. 외국인·기관 금액은 순매수 수량 × 종가로 계산한 추정치입니다. <a href="/privacy.html">개인정보처리방침</a></p>
 </body></html>`;
+  const html2 = html.replace('__CATLINKS__', CATLINKS);
   const dir = path.join(siteDir, 'etf', x.c);
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'index.html'), html);
+  fs.writeFileSync(path.join(dir, 'index.html'), html2);
   urls.push(url); n++;
 }
 
@@ -104,6 +107,51 @@ fs.writeFileSync(path.join(siteDir, 'etf', 'index.html'), `<!doctype html><html 
 <a class="top" href="/"><img src="/icon.svg" alt="">데이앤나잇 ETF</a><h1>국내 상장 해외 ETF 전체 목록</h1><div class="sub">${all.length}개 · ${atTxt} 기준</div>
 <div class="card"><table>${all.map((x) => `<tr><td><a href="/etf/${x.c}/" style="color:var(--ink)">${esc(x.n)}</a></td><td class="${cls(x.ch)}">${won(x.p)}</td></tr>`).join('')}</table></div></body></html>`);
 urls.push(`${SITE}/etf/`);
+
+// ---------- 카테고리 페이지 ----------
+const CATS=[
+ ['leverage','레버리지·인버스',/레버리지|인버스|2X|곱버스/i,'2배·3배로 움직이는 레버리지, 반대로 움직이는 인버스 ETF'],
+ ['covered-call','커버드콜·월배당',/커버드콜|프리미엄|인컴|월배당|타겟데일리/,'매달 분배금을 주는 커버드콜·월배당 ETF'],
+ ['nasdaq100','나스닥100',/나스닥100|NASDAQ100|나스닥 100/i,'애플·엔비디아·마이크로소프트 등 나스닥 상위 100개 기업에 투자하는 ETF'],
+ ['sp500','S&P500',/S&P500|S&P 500|S&P/,'미국 대표 500개 기업에 투자하는 S&P500 ETF'],
+ ['dividend','배당',/배당|다우존스|SCHD|리츠|REIT/i,'미국 배당주·다우존스 배당 ETF'],
+ ['semiconductor','반도체',/반도체|HBM|DRAM|메모리|필라델피아/,'필라델피아 반도체·HBM 등 반도체 ETF'],
+ ['power','전력·원자력·에너지',/전력|원자력|SMR|에너지|우라늄|인프라|유틸리티/,'AI 전력·원자력·SMR·에너지 ETF'],
+ ['space','우주·방산',/우주|방산|항공|조선/,'우주항공·방산 ETF'],
+ ['ai-tech','AI·테크',/AI|테크|빅테크|소프트웨어|클라우드|사이버|데이터센터|양자|로봇|휴머노이드|TOP10|TOP7|FANG|나스닥|플랫폼|메타버스|자율주행|전기차|2차전지|리튬|혁신/i,'AI·빅테크·로봇·양자컴퓨팅 ETF'],
+ ['healthcare','헬스케어·바이오',/헬스|바이오|의료|비만|제약/,'헬스케어·바이오 ETF'],
+ ['china','중국·홍콩',/차이나|중국|항셍|CSI|홍콩/,'중국·홍콩 항셍테크 ETF'],
+ ['global','인도·일본·글로벌',/인도|일본|니케이|베트남|대만|유럽|독일|글로벌|선진국|MSCI|신흥|아시아|멕시코|브라질/i,'인도·일본·베트남·글로벌 ETF'],
+ ['commodity','금·원자재',/골드|금현물|금선물|국제금|금채굴|은선물|원유|구리|원자재|농산물|천연가스/,'금·원유·원자재 ETF'],
+];
+const catOf=(n)=>{for(const c of CATS) if(c[2].test(n)) return c; return null};
+const catLinks=CATS.map(c=>`<a href="/c/${c[0]}/">${c[1]}</a>`).join('');
+for (const c of CATS) {
+  const xs=list.filter(x=>catOf(x.n)===c).sort((a,b)=>(b.cap||0)-(a.cap||0));
+  if(!xs.length) continue;
+  const withEst=xs.filter(x=>x.est!=null);
+  const avg=withEst.length?withEst.reduce((s,x)=>s+x.pct,0)/withEst.length:null;
+  const t=`${c[1]} ETF 비교 · 밤 예상가 순위 (${xs.length}개) | 데이앤나잇 ETF`;
+  const desc=`국내 상장 ${c[3]} ${xs.length}개를 한눈에 비교. 한국 장 마감 후 밤사이 예상 등락, 오늘 종가, 거래대금, 시가총액.${avg!=null?` 지금 평균 ${sign(avg)}.`:''}`;
+  const url=`${SITE}/c/${c[0]}/`;
+  const rows=xs.map((x,i)=>`<tr><td>${i+1}</td><td><a href="/etf/${x.c}/" style="color:var(--ink)">${esc(x.n)}</a><div class="sub">종가 ${won(x.p)} · 거래대금 ${eok((x.amt||0)/100)}</div></td><td class="${cls(x.est!=null?x.pct:x.ch)}" style="font-weight:800">${x.est!=null?sign(x.pct):`<span class="sub">오늘</span> ${sign(x.ch)}`}</td></tr>`).join('');
+  const html=`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<title>${esc(t)}</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${url}">
+<meta property="og:title" content="${esc(c[1])} ETF 밤 예상가 비교 · 데이앤나잇 ETF"><meta property="og:description" content="${esc(desc)}"><meta property="og:image" content="${SITE}/og.png"><meta property="og:url" content="${url}"><meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/icon.svg"><meta name="theme-color" content="#0f1115"><style>${CSS} td:first-child{color:var(--mute);width:28px} td .sub{font-size:12px}</style></head><body>
+<a class="top" href="/"><img src="/icon.svg" alt="">데이앤나잇 ETF</a>
+<h1>${esc(c[1])} ETF 비교</h1><div class="sub">${esc(c[3])} · ${xs.length}개 · ${atTxt} 기준</div>
+${avg!=null?`<div class="card" style="text-align:center"><div class="sub">🌙 한국 장 마감 후 지금까지 (평균)</div><div class="big ${cls(avg)}" style="font-size:40px;margin-top:2px">${sign(avg)}</div></div>`:''}
+<div class="card"><table>${rows}</table></div>
+<a class="cta" href="/">실시간 순위 보기 →</a>
+<div class="card rel"><h2>다른 분류</h2>${catLinks}</div>
+<p class="note">시가총액 순 정렬 · 마감 후 등락은 마감 iNAV 대비 추정치이며 투자 권유가 아닙니다. <a href="/guide/inav/">iNAV가 뭔가요?</a></p></body></html>`;
+  fs.mkdirSync(path.join(siteDir,'c',c[0]),{recursive:true});
+  fs.writeFileSync(path.join(siteDir,'c',c[0],'index.html'),html);
+  urls.push(url);
+}
+for (const g of ['inav','night-price']) urls.push(`${SITE}/guide/${g}/`);
 
 const today = atKst.toISOString().slice(0, 10);
 fs.writeFileSync(path.join(siteDir, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +

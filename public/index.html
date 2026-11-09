@@ -8,6 +8,9 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="description" content="데이앤나잇 ETF — 국내 상장 해외 ETF의 밤사이 추정 가치(iNAV), 외국인·기관 큰손 동향, 자금 유입 순위">
 <link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="데이앤나잇">
 <title>데이앤나잇 ETF · 해외 ETF 밤 시세</title>
 <meta property="og:title" content="데이앤나잇 ETF">
 <meta property="og:description" content="낮에는 한국장, 밤에는 미국장. 국내 상장 해외 ETF의 밤사이 추정 가치와 큰손 동향">
@@ -161,6 +164,8 @@ h1{font-size:21px;letter-spacing:-.3px}
 .abt .adb{align-self:flex-start;font-size:11px;font-weight:700;color:var(--acc);background:rgba(245,196,66,.14);padding:2px 8px;border-radius:6px}
 .abgo{align-self:flex-start;margin-top:4px;font-size:13.5px;font-weight:800;color:#111;background:var(--acc);padding:7px 12px;border-radius:10px}
 .adbig .disc{font-size:10px;color:#5d6470;margin:6px 4px 0;line-height:1.4}
+.sharebtn{display:block;width:100%;margin-top:10px;padding:10px;border:1px solid #333a4a;border-radius:12px;background:rgba(255,255,255,.04);color:var(--ink);font-weight:700;font-size:14px}
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#eef0f4;color:#111;padding:10px 16px;border-radius:12px;font-weight:700;z-index:50;font-size:14px}
 /* 제휴 상품 카드 */
 .ad{border:0;padding:0;margin-top:16px;text-align:left}
 .adc{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#1b1f27,#161a21);border:1px solid var(--line);border-radius:16px;padding:12px;color:var(--ink);text-decoration:none;transition:transform .12s cubic-bezier(.2,.8,.3,1.4)}
@@ -247,12 +252,22 @@ function li(x,i,o){
   return `<div class="li" onclick="openD('${x.code}')">${no}<div class="l"><div class="nm">${esc(x.name)}</div><div class="s">${subs.join(' · ')}</div></div>${right}</div>`;
 }
 const arrow=p=>p>0.005?'▲':p<-0.005?'▼':'';
+
+function shareNow(){
+  let url='https://daynnightetf.com/',text='미국장이 열린 밤, 내 해외 ETF는 지금 얼마일까? 🌙';
+  if(view.name==='detail'){const x=LIST.find(y=>y.code===view.code)||{};url+=`etf/${view.code}/`;if(x.pct!=null)text=`🌙 ${x.name} 한국 장 마감 후 ${sign(x.pct)} (예상 ${won(x.est)})`;else text=`${x.name} 밤 예상가·큰손 동향`}
+  else if(view.name==='cat'){const m={ndx:'nasdaq100',spx:'sp500',semi:'semiconductor',div:'dividend',lev:'leverage',cc:'covered-call',power:'power',space:'space',ai:'ai-tech',health:'healthcare',china:'china',world:'global',gold:'commodity'};if(m[view.key])url+=`c/${m[view.key]}/`;text=`${catName(view.key)} ETF 밤 예상가 비교 🌙`}
+  else{const a=LIST.filter(x=>x.cat==='ndx'&&x.pct!=null&&!x.w&&!/레버리지|인버스|\(H\)/.test(x.name));if(a.length){const v=a.reduce((s,x)=>s+x.pct,0)/a.length;text=`🌙 지금 나스닥100 ETF 한국 장 마감 후 평균 ${sign(v)}`}}
+  if(navigator.share){navigator.share({title:'데이앤나잇 ETF',text,url}).catch(()=>{})}
+  else{try{navigator.clipboard.writeText(text+'\n'+url);toast('링크를 복사했어요')}catch(e){prompt('링크를 복사하세요',url)}}
+}
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800)}
 function nightBanner(){
   const g=k=>{const a=LIST.filter(x=>x.cat===k&&x.pct!=null&&!x.w&&!/레버리지|인버스|\(H\)/.test(x.name));return a.length?a.reduce((s,x)=>s+x.pct,0)/a.length:null};
   const all=LIST.filter(x=>x.pct!=null&&!x.w&&!/레버리지|인버스/.test(x.name));
   const up=all.filter(x=>x.pct>0.005).length,dn=all.filter(x=>x.pct<-0.005).length;
   const box=(n,v)=>`<div class="nb"><span>${n}</span><b class="${cls(v)}">${v==null?'-':arrow(v)+Math.abs(v).toFixed(2)+'%'}</b></div>`;
-  return `<div class="banner"><div class="bt">🌙 한국 장 마감 후 지금까지</div><div class="nbs">${box('나스닥100 ETF',g('ndx'))}${box('S&P500 ETF',g('spx'))}${box('반도체 ETF',g('semi'))}</div><div class="bs"><span class="up">▲ ${up}개</span> 오름 · <span class="down">▼ ${dn}개</span> 내림 · 마감 iNAV 대비</div></div>`;
+  return `<div class="banner"><div class="bt">🌙 한국 장 마감 후 지금까지</div><div class="nbs">${box('나스닥100 ETF',g('ndx'))}${box('S&P500 ETF',g('spx'))}${box('반도체 ETF',g('semi'))}</div><div class="bs"><span class="up">▲ ${up}개</span> 오름 · <span class="down">▼ ${dn}개</span> 내림 · 마감 iNAV 대비</div><button class="sharebtn" onclick="shareNow()">↗ 친구에게 공유하기</button></div>`;
 }
 
 
@@ -481,7 +496,8 @@ function render(){
     h=h.replace(/<button class="back"[^>]*>[^<]*<\/button>/g,'');
     let fav='';if(view.name==='detail'){const c=view.code;h=h.replace(/<button class="x" style="color:var\(--acc\);float:right;margin-top:-2px"[^>]*>[^<]*<\/button>/,'');fav=`<button class="tb-fav" onclick="toggleFav('${c}')">${favs.includes(c)?'★':'☆'}</button>`}
     const ttl=view.name==='cat'?catName(view.key):((LIST.find(x=>x.code===view.code)||{}).name||'');
-    h=`<div class="topbar"><button class="tb-back" onclick="back()" aria-label="뒤로">‹</button><b>${esc(ttl)}</b>${fav}</div>`+h;
+    const shr=`<button class="tb-fav" onclick="shareNow()" aria-label="공유">↗</button>`;
+    h=`<div class="topbar"><button class="tb-back" onclick="back()" aria-label="뒤로">‹</button><b>${esc(ttl)}</b>${shr}${fav}</div>`+h;
   }
   $('#main').innerHTML=h;
 }
@@ -522,7 +538,8 @@ function status(){if(META){const d=new Date(META.at);$('#status').textContent='�
     applyWH();status();render();
   }
   await load();
-  try{const d=new Date(Date.now()+9*3600e3).toISOString().slice(0,10).replace(/-/g,''),H='https://abacus.jasoncameron.dev/hit/daynnightetf/';
+  if(/[?&]me(=|&|$)/.test(location.search)){store.set('me',1);toast('이 브라우저는 방문자 수에서 빠졌어요');history.replaceState(null,'',location.pathname)}
+  if(!store.get('me',0)&&!navigator.webdriver)try{const d=new Date(Date.now()+9*3600e3).toISOString().slice(0,10).replace(/-/g,''),H='https://abacus.jasoncameron.dev/hit/daynnightetf/';
     fetch(H+'pv-total').catch(()=>{});fetch(H+'pv-'+d).catch(()=>{});
     if(store.get('uv',null)!==d){store.set('uv',d);fetch(H+'uv-'+d).catch(()=>{})}}catch(e){}
   const hm=location.hash.match(/^#etf=([0-9A-Z]{6})$/);if(hm&&LIST.some(x=>x.code===hm[1])){openD(hm[1]);history.replaceState(null,'',location.pathname)}
@@ -530,6 +547,6 @@ function status(){if(META){const d=new Date(META.at);$('#status').textContent='�
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')load()});
 })()
 </script>
-<div style="text-align:center;padding:18px 0 28px;font-size:12px;color:#8a919e"><a href="etf/" style="color:#8a919e">전체 ETF 목록</a> · <a href="privacy.html" style="color:#8a919e">개인정보처리방침</a> · 정보 제공 목적이며 투자 권유가 아닙니다</div>
+<div style="text-align:center;padding:18px 0 28px;font-size:12px;color:#8a919e"><a href="guide/night-price/" style="color:#8a919e">밤에 ETF 가격 보는 법</a> · <a href="guide/inav/" style="color:#8a919e">iNAV란?</a> · <a href="etf/" style="color:#8a919e">전체 ETF 목록</a> · <a href="privacy.html" style="color:#8a919e">개인정보처리방침</a> · 정보 제공 목적이며 투자 권유가 아닙니다</div>
 </body>
 </html>
