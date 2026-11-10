@@ -151,7 +151,7 @@ ${avg!=null?`<div class="card" style="text-align:center"><div class="sub">ðŸŒ™ í
   fs.writeFileSync(path.join(siteDir,'c',c[0],'index.html'),html);
   urls.push(url);
 }
-for (const g of ['inav','night-price']) urls.push(`${SITE}/guide/${g}/`);
+for (const g of ['','inav','night-price','us-market-hours','premium-discount','hedged','futures']) urls.push(`${SITE}/guide/${g}${g?'/':''}`);
 
 const today = atKst.toISOString().slice(0, 10);
 fs.writeFileSync(path.join(siteDir, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
