@@ -61,12 +61,19 @@ for (const x of list) {
   const url = `${SITE}/etf/${x.c}/`;
   const top = (d.top || []).slice(0, 6);
   const rel = related(x);
+  const faq = [];
+  if (hasEst) faq.push([`${name} 밤에 가격을 볼 수 있나요?`, `국내 ETF라 밤에는 거래되지 않지만, 한국 장 마감 후 미국 시세와 환율을 반영해 추정할 수 있어요. ${atTxt} 기준 예상 가격은 ${won(x.est)}으로, 마감 iNAV 대비 ${sign(x.pct)}예요.`]);
+  if (hasEst) faq.push([`${name} 내일 시가는 얼마로 시작할까요?`, `밤사이 미국 시장 변화는 다음 날 오전 9시 시가에 반영돼요. 지금 추정으로는 ${won(x.est)} 근처예요. 추정치라 장 시작 직전 뉴스나 호가에 따라 달라질 수 있어요.`]);
+  if (d.hedged != null) faq.push([`${name}, 환헤지 상품인가요?`, d.hedged ? `네, 환헤지(H) 상품이라 원/달러 환율 변화의 영향을 거의 받지 않아요.` : `아니요, 환노출 상품이라 미국 자산 수익에 원/달러 환율 변화가 함께 반영돼요.`]);
+  if (top.length) faq.push([`${name}에는 어떤 종목이 담겨 있나요?`, `비중이 큰 종목은 ${top.slice(0, 3).map((t) => `${t.n || t.t}(${t.w}%)`).join(', ')} 등이에요.`]);
+  const faqLd = faq.length ? `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }).replace(/</g, '\\u003c')}</script>` : '';
+  const faqHtml = faq.length ? `<div class="card"><h2>자주 묻는 질문</h2>${faq.map(([q, a]) => `<p style="margin:10px 0 2px"><b>Q. ${esc(q)}</b></p><p style="margin:0;color:#c9ced8">${esc(a)}</p>`).join('')}</div>` : '';
   const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <title>${esc(title)}</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${url}">
 <meta property="og:type" content="website"><meta property="og:title" content="${esc(name)} 밤 예상가 · 데이앤나잇 ETF"><meta property="og:description" content="${esc(desc)}">
 <meta property="og:url" content="${url}"><meta property="og:image" content="${SITE}/og.png"><meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="/icon.svg"><meta name="theme-color" content="#0f1115"><style>${CSS}</style></head><body>
+<link rel="icon" href="/icon.svg"><meta name="theme-color" content="#0f1115">${faqLd}<style>${CSS}</style></head><body>
 <a class="top" href="/"><img src="/icon.svg" alt="">데이앤나잇 ETF</a>
 <h1>${esc(name)}</h1><div class="sub">국내 상장 해외 ETF · ${atTxt} 계산</div>
 ${hasEst ? `<div class="card" style="text-align:center"><div class="sub">🌙 한국 장 마감 후 지금까지</div><div class="big ${cls(x.pct)}" style="font-size:44px;margin-top:2px">${x.pct > 0.005 ? '▲' : x.pct < -0.005 ? '▼' : ''}${Math.abs(x.pct).toFixed(2)}%</div><div>예상 가격 <b>${won(x.est)}</b> <span class="sub">(오늘 종가 ${won(x.p)})</span></div></div>`
@@ -87,6 +94,8 @@ ${w ? `<div class="card"><h2>🐋 큰손 동향 <span class="sub">${md(w.d)} 기
 </div></div>` : ''}
 ${top.length ? `<div class="card"><h2>많이 담은 종목</h2><table>${top.map((t) => `<tr><td>${esc(t.n || t.t)}</td><td>${t.w}%</td></tr>`).join('')}</table></div>` : ''}
 <a class="cta" href="/#etf=${x.c}">실시간 화면에서 보기 →</a>
+${faqHtml}
+<div class="card rel"><h2>오늘 밤 시황</h2><a href="/night/">${atKst.getUTCMonth() + 1}월 ${atKst.getUTCDate()}일 해외 ETF 밤 예상 등락 →</a></div>
 ${rel.length ? `<div class="card rel"><h2>비슷한 ETF</h2>${rel.map((y) => `<a href="/etf/${y.c}/">${esc(y.n)}</a>`).join('')}</div>` : ''}
 <div class="card rel"><h2>분류별 보기</h2>__CATLINKS__</div>
 <p class="note"><a href="/guide/night-price/">밤에 국내 ETF 가격 보는 법</a> · <a href="/guide/inav/">iNAV란?</a><br>추정치이며 투자 권유가 아닙니다. 밤 예상 가격은 마감 iNAV, 구성종목 비중, 미국 시세, 원/달러 환율로 계산하며 미국 정규장이 닫혀 있을 때는 지수 선물 움직임을 반영합니다. 외국인·기관 금액은 순매수 수량 × 종가로 계산한 추정치입니다. <a href="/privacy.html">개인정보처리방침</a></p>
@@ -150,6 +159,40 @@ ${avg!=null?`<div class="card" style="text-align:center"><div class="sub">🌙 �
   fs.mkdirSync(path.join(siteDir,'c',c[0]),{recursive:true});
   fs.writeFileSync(path.join(siteDir,'c',c[0],'index.html'),html);
   urls.push(url);
+}
+// ---------- 오늘 밤 시황 (매 갱신마다 새로 씀) ----------
+{
+  const M = atKst.getUTCMonth() + 1, D = atKst.getUTCDate(), H = atKst.getUTCHours();
+  const plain = list.filter((x) => x.est != null && !x.w && !/레버리지|인버스/.test(x.n));
+  const avgOf = (k) => { const a = plain.filter((x) => catOf(x.n) && catOf(x.n)[0] === k && !/\(H\)/.test(x.n)); return a.length ? a.reduce((s, x) => s + x.pct, 0) / a.length : null; };
+  const nq = avgOf('nasdaq100'), sp = avgOf('sp500'), se = avgOf('semiconductor');
+  const up = plain.filter((x) => x.pct > 0.005).length, dn = plain.filter((x) => x.pct < -0.005).length;
+  const sorted = plain.slice().sort((a, b) => b.pct - a.pct);
+  const tops = sorted.slice(0, 10), bots = sorted.slice(-10).reverse();
+  const slot = H >= 18 || H < 3 ? '밤' : H < 7 ? '새벽' : '아침';
+  const t = `${M}월 ${D}일 ${slot} 해외 ETF 예상 등락 — 나스닥100 ${sign(nq)} · S&P500 ${sign(sp)}`;
+  const desc = `${M}월 ${D}일 ${atTxt.split(' ').pop()} 기준, 한국 장 마감 후 국내 상장 해외 ETF 밤사이 예상 등락. 나스닥100 ETF 평균 ${sign(nq)}, S&P500 ETF ${sign(sp)}, 반도체 ETF ${sign(se)}. 오른 ETF ${up}개, 내린 ETF ${dn}개.`;
+  const row = (x, i) => `<tr><td>${i + 1}</td><td><a href="/etf/${x.c}/" style="color:var(--ink)">${esc(x.n)}</a><div class="sub">예상 ${won(x.est)} · 종가 ${won(x.p)}</div></td><td class="${cls(x.pct)}" style="font-weight:800">${sign(x.pct)}</td></tr>`;
+  const box = (n, v) => `<div style="text-align:center"><span>${n}</span><b class="${cls(v)}" style="font-size:20px">${sign(v)}</b></div>`;
+  const url = `${SITE}/night/`;
+  const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<title>${esc(t)} | 데이앤나잇 ETF</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${url}">
+<meta property="og:type" content="article"><meta property="og:title" content="${esc(t)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:image" content="${SITE}/og.png"><meta property="og:url" content="${url}"><meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@type': 'NewsArticle', headline: t, datePublished: at.toISOString(), dateModified: at.toISOString(), author: { '@type': 'Organization', name: '데이앤나잇 ETF' }, publisher: { '@type': 'Organization', name: '데이앤나잇 ETF' } }).replace(/</g, '\\u003c')}</script>
+<link rel="icon" href="/icon.svg"><meta name="theme-color" content="#0f1115"><style>${CSS} td:first-child{color:var(--mute);width:28px} td .sub{font-size:12px} .kv3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.kv3 div{background:#13161c;border-radius:10px;padding:10px 4px}.kv3 span{display:block;color:var(--mute);font-size:12px}</style></head><body>
+<a class="top" href="/"><img src="/icon.svg" alt="">데이앤나잇 ETF</a>
+<h1>${M}월 ${D}일 ${slot} 해외 ETF 예상 등락</h1><div class="sub">${atTxt} 계산 · 한국 장 마감(15:30) 후 지금까지 · 하루 4번 자동 갱신</div>
+<div class="card"><div class="sub" style="margin-bottom:8px">🌙 분류별 평균 (레버리지·인버스·환헤지 제외)</div><div class="kv3">${box('나스닥100', nq)}${box('S&amp;P500', sp)}${box('반도체', se)}</div>
+<p style="margin:12px 0 0">밤사이 추정 기준으로 해외 ETF <b class="up">${up}개</b>가 오르고 <b class="down">${dn}개</b>가 내렸어요. 가장 많이 오른 ETF는 <b>${esc(tops[0] ? tops[0].n : '-')}</b>(${sign(tops[0] && tops[0].pct)}), 가장 많이 내린 ETF는 <b>${esc(bots[0] ? bots[0].n : '-')}</b>(${sign(bots[0] && bots[0].pct)})예요. 이 변화는 다음 날 오전 9시 한국 장 시가에 반영돼요.</p></div>
+<div class="card"><h2>🔺 많이 오를 것으로 보이는 ETF</h2><table>${tops.map(row).join('')}</table></div>
+<div class="card"><h2>🔻 많이 내릴 것으로 보이는 ETF</h2><table>${bots.map(row).join('')}</table></div>
+<a class="cta" href="/">실시간 순위 전체 보기 →</a>
+<div class="card rel"><h2>분류별 보기</h2>${catLinks}</div>
+<p class="note">마감 iNAV, 구성종목 비중, 미국 시세, 원/달러 환율로 계산한 추정치이며 투자 권유가 아닙니다. 미국 정규장이 닫혀 있을 때는 지수 선물 움직임을 반영합니다. 밤 추정은 시가총액 상위 150개 대상. <a href="/guide/night-price/">밤에 ETF 가격 보는 법</a> · <a href="/guide/">가이드</a></p></body></html>`;
+  fs.mkdirSync(path.join(siteDir, 'night'), { recursive: true });
+  fs.writeFileSync(path.join(siteDir, 'night', 'index.html'), html);
+  urls.unshift(url);
 }
 for (const g of ['','inav','night-price','us-market-hours','premium-discount','hedged','futures']) urls.push(`${SITE}/guide/${g}${g?'/':''}`);
 
