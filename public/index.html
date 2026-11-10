@@ -283,20 +283,23 @@ function pfView(){
   const rows=PF.items.map((it,i)=>{const m=M(it.code),pn=priceNow(it.code),px=pn.px||it.avg,last=(m.price||px);
     return {...it,i,m,src:pn.src,val:px*it.qty,cost:it.avg*it.qty,night:(px-last)*it.qty}}).sort((a,b)=>b.val-a.val);
   const cash=+PF.cash||0,stock=rows.reduce((a,r)=>a+r.val,0),total=stock+cash,cost=rows.reduce((a,r)=>a+r.cost,0);
-  const pnl=stock-cost,night=rows.reduce((a,r)=>a+r.night,0),lastTotal=total-night;
+  const pnl=stock-cost,night=rows.reduce((a,r)=>a+r.night,0),lastTotal=total-night,pnlC=pnl-night;
+  const same=rows.filter(r=>r.m.price&&Math.abs(r.avg-r.m.price)<0.5);
   const segs=rows.map((r,k)=>({n:r.m.name||r.code,w:total?r.val/total:0,c:PAL[k%PAL.length]})).concat(cash>0?[{n:'예수금',w:cash/total,c:'#3a3f4b'}]:[]);
   const sum=`<div class="card">
     <div class="meta" style="margin-top:0">내 포트폴리오 · 추정</div>
     <div class="big" style="font-size:30px">${won(total)}</div>
     <div class="sumrow"><span>오늘 밤 예상 변동</span><span class="pct ${cls(night)}">${sw(night)} (${sign(lastTotal?night/lastTotal*100:0)})</span></div>
-    <div class="sumrow"><span>총 손익 (투자원금 ${won(cost)})</span><span class="pct ${cls(pnl)}">${sw(pnl)} (${sign(cost?pnl/cost*100:0)})</span></div>
+    <div class="sumrow"><span>총 손익 · 종가 기준 (원금 ${won(cost)})</span><span class="pct ${cls(pnlC)}">${sw(pnlC)} (${sign(cost?pnlC/cost*100:0)})</span></div>
+    <div class="sumrow"><span>총 손익 · 밤 예상 반영</span><span class="pct ${cls(pnl)}">${sw(pnl)} (${sign(cost?pnl/cost*100:0)})</span></div>
+    ${same.length?`<div class="meta" style="color:var(--acc);margin-top:8px" onclick="openForm(${same[0].i})">⚠ ${esc(same.map(r=>(r.m.name||r.code)).join(', '))}의 평균 매수가가 오늘 종가와 같아요. 증권사 앱의 실제 평균단가로 고쳐 주세요 (눌러서 수정)</div>`:''}
     ${total?`<div class="bar">${segs.map(g=>`<i style="width:${(g.w*100).toFixed(2)}%;background:${g.c}"></i>`).join('')}</div>
     <div class="legend">${segs.map(g=>`<span><b style="background:${g.c}"></b>${esc(g.n.replace(/^(TIGER|KODEX|ACE|RISE|SOL|TIME|PLUS|KIWOOM|HANARO|KoAct|WON) /,''))} ${(g.w*100).toFixed(1)}%</span>`).join('')}</div>`:''}
   </div>`;
   const cashRow=`<div class="li" onclick="openCash()"><div class="l"><div class="nm">예수금</div><div class="s">눌러서 수정</div></div><div class="r"><div class="v">${won(cash)}</div></div></div>`;
   const list=rows.length?`<div class="list">${rows.map(r=>`<div class="li" onclick="openForm(${r.i})">
      <div class="l"><div class="nm">${esc(r.m.name||r.code)}</div><div class="s">${r.qty.toLocaleString('ko-KR')}주 · 평균 ${won(r.avg)} · ${r.src} ${won(r.val/r.qty)}</div></div>
-     <div class="r"><div class="v">${won(r.val)}</div><div class="p ${cls(r.val-r.cost)}">${sign(r.cost?(r.val-r.cost)/r.cost*100:0)}</div></div>
+     <div class="r"><div class="v">${won(r.val)}</div><div class="p ${cls(r.val-r.night-r.cost)}">${sign(r.cost?(r.val-r.night-r.cost)/r.cost*100:0)}</div></div>
      <div class="ed"><button onclick="event.stopPropagation();openForm(${r.i})">수정</button><button class="del" onclick="event.stopPropagation();delItem(${r.i})">삭제</button></div></div>`).join('')}
      ${cashRow}</div>`
     :`<div class="empty">보유한 ETF를 추가하면 잔고를 계산해 드려요</div><div class="list">${cashRow}</div>`;
@@ -312,7 +315,7 @@ function formView(){
   return `<div class="form"><b>${pfForm.idx!=null?'종목 수정':'종목 추가'}</b>
     <label>ETF</label><input id="f_q" placeholder="이름이나 종목코드" value="${esc(m.name||'')}" oninput="pickList(this.value)" autocomplete="off"><div class="pick" id="f_pick"></div>
     <label>보유 수량(주)</label><input id="f_qty" type="number" inputmode="decimal" value="${pfForm.qty||''}">
-    <label>평균 매수가(원)</label><input id="f_avg" type="number" inputmode="decimal" value="${pfForm.avg||''}">
+    <label>평균 매수가(원)</label><input id="f_avg" type="number" inputmode="decimal" placeholder="증권사 앱의 평균단가(매입단가)" value="${pfForm.avg||''}">
     <div class="meta" id="f_msg"></div>
     <div class="acts"><button style="background:var(--line);color:var(--ink)" onclick="closeForm()">취소</button>${pfForm.idx!=null?`<button style="background:#3a1f22;color:var(--up)" onclick="delItem(${pfForm.idx})">삭제</button>`:''}<button style="background:var(--acc);color:#111" onclick="saveForm()">저장</button></div></div>`;
 }
@@ -322,7 +325,7 @@ function openCash(){pfForm={mode:'cash'};render();scrollTo(0,0)}
 function pickList(q){const box=$('#f_pick');q=q.trim().toLowerCase().replace(/\s/g,'');if(!q){box.style.display='none';return}
   const hit=LIST.filter(x=>x.code.toLowerCase().includes(q)||x.name.toLowerCase().replace(/\s/g,'').includes(q)).slice(0,20);
   box.innerHTML=hit.map(x=>`<div onclick="pickIt('${x.code}')"><span>${esc(x.name)}</span><small>${won(x.price)}</small></div>`).join('')||'<div><small>검색 결과가 없어요</small></div>';box.style.display='block'}
-function pickIt(code){pfForm.code=code;const m=M(code);$('#f_q').value=m.name;$('#f_pick').style.display='none';if(!$('#f_avg').value)$('#f_avg').value=m.price||''}
+function pickIt(code){pfForm.code=code;const m=M(code);$('#f_q').value=m.name;$('#f_pick').style.display='none';}
 function saveForm(){const qty=+$('#f_qty').value,avg=+$('#f_avg').value;
   if(!pfForm.code){$('#f_msg').textContent='ETF를 목록에서 골라주세요';return}
   if(!(qty>0)||!(avg>0)){$('#f_msg').textContent='수량과 평균 매수가를 넣어주세요';return}
