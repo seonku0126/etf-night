@@ -165,6 +165,7 @@ h1{font-size:21px;letter-spacing:-.3px}
 .abgo{align-self:flex-start;margin-top:4px;font-size:13.5px;font-weight:800;color:#111;background:var(--acc);padding:7px 12px;border-radius:10px}
 .adbig .disc{font-size:10px;color:#5d6470;margin:6px 4px 0;line-height:1.4}
 .sharebtn{display:block;width:100%;margin-top:10px;padding:10px;border:1px solid #333a4a;border-radius:12px;background:rgba(255,255,255,.04);color:var(--ink);font-weight:700;font-size:14px}
+.pfbtn{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:40;display:flex;align-items:center;gap:6px;background:#1c2029;border:1px solid var(--line);color:var(--ink);padding:10px 14px;border-radius:999px;font-weight:700;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.35)}.pfbtn .up{color:var(--up)}.pfbtn .down{color:var(--down)}
 .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#eef0f4;color:#111;padding:10px 16px;border-radius:12px;font-weight:700;z-index:50;font-size:14px}
 /* 제휴 상품 카드 */
 .ad{border:0;padding:0;margin-top:16px;text-align:left}
@@ -285,7 +286,7 @@ function pfView(){
   const pnl=stock-cost,night=rows.reduce((a,r)=>a+r.night,0),lastTotal=total-night;
   const segs=rows.map((r,k)=>({n:r.m.name||r.code,w:total?r.val/total:0,c:PAL[k%PAL.length]})).concat(cash>0?[{n:'예수금',w:cash/total,c:'#3a3f4b'}]:[]);
   const sum=`<div class="card">
-    <div class="meta" style="margin-top:0">내 잔고 · 추정</div>
+    <div class="meta" style="margin-top:0">내 포트폴리오 · 추정</div>
     <div class="big" style="font-size:30px">${won(total)}</div>
     <div class="sumrow"><span>오늘 밤 예상 변동</span><span class="pct ${cls(night)}">${sw(night)} (${sign(lastTotal?night/lastTotal*100:0)})</span></div>
     <div class="sumrow"><span>총 손익 (투자원금 ${won(cost)})</span><span class="pct ${cls(pnl)}">${sw(pnl)} (${sign(cost?pnl/cost*100:0)})</span></div>
@@ -302,7 +303,7 @@ function pfView(){
   const ub=undo?`<div class="undo"><span>${esc(M(undo.it.code).name||undo.it.code)} 삭제됨</span><button onclick="undoDel()">되돌리기</button></div>`:'';
   return ub+sum+list+`
     <button class="btn" onclick="openForm(null)">+ 종목 추가</button>
-    <div class="note" style="margin-top:10px">가격은 밤 추정값(시가총액 상위 150개) 또는 마지막 종가를 써요. ${pfDoc?'Claude 계정에 저장돼 다른 기기에서도 보여요.':'이 기기에만 저장돼요.'}</div>`+adSlot();
+    <div class="note" style="margin-top:10px">${META?'밤 추정 '+hm(META.at)+' 기준 · ':''}5분마다 새로 불러와요. 가격은 밤 추정값(시가총액 상위 150개) 또는 마지막 종가를 써요. 이 기기 브라우저에만 저장되고, 다른 사람에게는 이 칸이 보이지 않아요.</div>`;
 }
 function formView(){
   if(pfForm.mode==='cash')return `<div class="form"><b>예수금</b><label>금액(원)</label><input id="f_cash" type="number" inputmode="numeric" value="${PF.cash||''}">
@@ -334,6 +335,13 @@ function delItem(i){const it=PF.items[i];if(!it)return;PF.items.splice(i,1);pers
 function undoDel(){if(!undo)return;PF.items.splice(Math.min(undo.i,PF.items.length),0,undo.it);undo=null;clearTimeout(undoT);persist();render()}
 
 
+function pfChip(){
+  if(!store.get('me',0)||view.name==='pf')return '';
+  let t='💼 내 포트폴리오';
+  if(META&&PF.items.length){let v=0,n=0;for(const it of PF.items){const m=M(it.code),px=priceNow(it.code).px||it.avg,last=m.price||px;v+=px*it.qty;n+=(px-last)*it.qty}
+    v+=+PF.cash||0;const p=v-n?n/(v-n)*100:0;t=`💼 <span class="${cls(p)}">${arrow(p)}${Math.abs(p).toFixed(2)}%</span> <span style="font-weight:400">${sw(n)}</span>`}
+  return `<button class="pfbtn" onclick="openPF()">${t}</button>`}
+function openPF(){pfForm=null;push({name:'pf',tab:'pf'})}
 // ---------- 화면 ----------
 function favView(){return (favs.length?favs.map(c=>(load(c),card(c))).join(''):'<div class="empty">ETF를 검색하거나 카테고리에서 골라 담아보세요</div>')+adSlot()}
 function catsView(){
@@ -480,6 +488,7 @@ function render(){
   else if(view.name==='cat')h=catView(view.key);
   else if(view.name==='rank')h=rankView();
   else if(view.name==='whale')h=whaleView();
+  else if(view.name==='pf')h=pfView();
   else if(view.name==='detail'){
     load(view.code);const c=view.code,m=M(c),d=DATA[c]||{};
     const fb=`<button class="x" style="color:var(--acc);float:right;margin-top:-2px" onclick="toggleFav('${c}')">${favs.includes(c)?'★ 관심 해제':'☆ 관심 담기'}</button>`;
@@ -492,14 +501,14 @@ function render(){
     else h=detail(c).replace('onclick="home()">← 목록</button>','onclick="back()">← 목록</button>'+fb).replace('<div class="kv">',info+'<div class="kv">');
   }
   if(view.name==='detail')h+=whaleBox(view.code);
-  if(view.name==='detail'||view.name==='cat'){
+  if(view.name==='detail'||view.name==='cat'||view.name==='pf'){
     h=h.replace(/<button class="back"[^>]*>[^<]*<\/button>/g,'');
     let fav='';if(view.name==='detail'){const c=view.code;h=h.replace(/<button class="x" style="color:var\(--acc\);float:right;margin-top:-2px"[^>]*>[^<]*<\/button>/,'');fav=`<button class="tb-fav" onclick="toggleFav('${c}')">${favs.includes(c)?'★':'☆'}</button>`}
-    const ttl=view.name==='cat'?catName(view.key):((LIST.find(x=>x.code===view.code)||{}).name||'');
-    const shr=`<button class="tb-fav" onclick="shareNow()" aria-label="공유">↗</button>`;
+    const ttl=view.name==='pf'?'내 포트폴리오':view.name==='cat'?catName(view.key):((LIST.find(x=>x.code===view.code)||{}).name||'');
+    const shr=view.name==='pf'?'':`<button class="tb-fav" onclick="shareNow()" aria-label="공유">↗</button>`;
     h=`<div class="topbar"><button class="tb-back" onclick="back()" aria-label="뒤로">‹</button><b>${esc(ttl)}</b>${shr}${fav}</div>`+h;
   }
-  $('#main').innerHTML=h;
+  $('#main').innerHTML=h+pfChip();
 }
 let prev=null;
 let stack=[],scrolls=[];
@@ -507,7 +516,7 @@ function go(t){view={name:t};stack=[];scrolls=[];pfForm=null;store.set('tab2',t)
 function push(v){stack.push(view);scrolls.push(scrollY);view=v;try{history.pushState({d:stack.length},'')}catch(e){}render();scrollTo(0,0)}
 function openCat(k){push({name:'cat',key:k,tab:'cats'})}
 function openD(code){push({name:'detail',code,tab:view.tab||view.name})}
-function popView(){if(!stack.length)return false;view=stack.pop();const y=scrolls.pop()||0;render();scrollTo(0,y);return true}
+function popView(){if(!stack.length)return false;pfForm=null;view=stack.pop();const y=scrolls.pop()||0;render();scrollTo(0,y);return true}
 function back(){if(stack.length&&history.state&&history.state.d){history.back()}else if(!popView()){go('rank')}}
 function home(){back()}
 addEventListener('popstate',()=>{popView()});
@@ -535,10 +544,10 @@ function status(){if(META){const d=new Date(META.at);$('#status').textContent='�
     if(!m){if(!META)$('#status').textContent='데이터를 불러오지 못했어요. 잠시 후 다시 열어주세요';return}
     META=m;LIST=(META.list||[]).map(x=>({code:x.c,name:x.n,price:x.p,cap:x.cap,ch:x.ch,amt:x.amt,fb:x.fb,fbd:x.fbd,est:x.est,pct:x.pct,pr:x.pr,w:x.w,cat:catOf(x.n)}));
     if(w)WH=w;DET={};for(const d of ds)if(d&&d.items)Object.assign(DET,d.items);DATA={};
-    applyWH();status();render();
+    applyWH();status();if(!pfForm)render();
   }
   await load();
-  if(/[?&]me(=|&|$)/.test(location.search)){store.set('me',1);toast('이 브라우저는 방문자 수에서 빠졌어요');history.replaceState(null,'',location.pathname)}
+  if(/[?&]me(=|&|$)/.test(location.search)){store.set('me',1);toast('이 브라우저는 방문자 수에서 빠졌어요');history.replaceState(null,'',location.pathname);render()}
   const BOT=/bot|crawl|spider|slurp|Yeti|Daum|Headless|Lighthouse|preview|facebookexternalhit|kakaotalk-scrap/i.test(navigator.userAgent);
   if(!store.get('me',0)&&!navigator.webdriver&&!BOT)try{const d=new Date(Date.now()+9*3600e3).toISOString().slice(0,10).replace(/-/g,''),H='https://abacus.jasoncameron.dev/hit/daynnightetf/';
     fetch(H+'pv-total').catch(()=>{});fetch(H+'pv-'+d).catch(()=>{});
