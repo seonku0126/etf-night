@@ -539,9 +539,12 @@ function status(){if(META){const d=new Date(META.at);$('#status').textContent='�
   }
   await load();
   if(/[?&]me(=|&|$)/.test(location.search)){store.set('me',1);toast('이 브라우저는 방문자 수에서 빠졌어요');history.replaceState(null,'',location.pathname)}
-  if(!store.get('me',0)&&!navigator.webdriver)try{const d=new Date(Date.now()+9*3600e3).toISOString().slice(0,10).replace(/-/g,''),H='https://abacus.jasoncameron.dev/hit/daynnightetf/';
+  const BOT=/bot|crawl|spider|slurp|Yeti|Daum|Headless|Lighthouse|preview|facebookexternalhit|kakaotalk-scrap/i.test(navigator.userAgent);
+  if(!store.get('me',0)&&!navigator.webdriver&&!BOT)try{const d=new Date(Date.now()+9*3600e3).toISOString().slice(0,10).replace(/-/g,''),H='https://abacus.jasoncameron.dev/hit/daynnightetf/';
     fetch(H+'pv-total').catch(()=>{});fetch(H+'pv-'+d).catch(()=>{});
-    if(store.get('uv',null)!==d){store.set('uv',d);fetch(H+'uv-'+d).catch(()=>{})}}catch(e){}
+    if(store.get('uv',null)!==d){store.set('uv',d);fetch(H+'uv-'+d).catch(()=>{});
+      const r=document.referrer||'',ua=navigator.userAgent;const src=/naver/i.test(r)?'naver':/google/i.test(r)?'google':/daum|kakao/i.test(r)||/KAKAOTALK/i.test(ua)?'kakao':/instagram|threads|facebook|t\.co|twitter|x\.com/i.test(r+ua)?'sns':r&&!r.includes(location.host)?'etc':'direct';
+      fetch(H+'src-'+src+'-'+d).catch(()=>{})}}catch(e){}
   const hm=location.hash.match(/^#etf=([0-9A-Z]{6})$/);if(hm&&LIST.some(x=>x.code===hm[1])){openD(hm[1]);history.replaceState(null,'',location.pathname)}
   setInterval(()=>{if(document.visibilityState==='visible')load()},300000);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')load()});
