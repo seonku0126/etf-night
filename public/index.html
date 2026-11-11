@@ -179,6 +179,10 @@ h1{font-size:21px;letter-spacing:-.3px}
 .adhome .abd{font-size:13.5px;color:var(--mute)}
 .adhome .abgo{align-self:stretch;text-align:center;margin-top:6px;font-size:15px;font-weight:800;color:#111;background:var(--acc);padding:11px;border-radius:12px}
 .adhome .disc{font-size:10px;color:#5d6470;margin:6px 4px 0;line-height:1.4}
+.ah-price{display:flex;align-items:baseline;gap:8px;margin-top:2px}
+.ah-price b{font-size:26px;font-weight:900;letter-spacing:-.6px;color:var(--ink)}
+.ah-off{font-size:22px;font-weight:900;color:var(--up)}
+.ah-price s{font-size:13.5px;color:var(--mute)}
 /* 제휴 상품 카드 */
 .ad{border:0;padding:0;margin-top:16px;text-align:left}
 .adc{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#1b1f27,#161a21);border:1px solid var(--line);border-radius:16px;padding:12px;color:var(--ink);text-decoration:none;transition:transform .12s cubic-bezier(.2,.8,.3,1.4)}
@@ -217,9 +221,9 @@ let view={name:(t=>['rank','cats','whale','fav'].includes(t)?t:'rank')(store.get
 // ---------- 제휴 상품 자리 (토스쇼핑 쉐어링크) ----------
 const ADS=[{img:'img/ad-charger.jpg',name:'맥도도 GaN 67W 케이블 일체형 2포트 충전기',desc:'케이블 챙길 필요 없이 바로 충전',url:'https://toss.shopping/_m/roX3Fs9A'}];
 // 홈(순위) 화면 큰 상품 칸: HOME_AD에 상품을 넣으면 모두에게 보이고, 비어 있으면 본인(?me) 브라우저에만 빈 칸 미리보기
-const HOME_AD=null; // 예: {img:'img/ad-xxx.jpg',name:'상품 이름',desc:'한 줄 설명',url:'https://toss.shopping/_m/...'}
+const HOME_AD={img:'img/ad-gyul.jpg',name:'제주 산지직송 햇감귤 3kg',desc:'밤샘 차트 보면서 까먹기 좋은 제철 감귤',url:'https://toss.shopping/_m/jRfwWrVf',price:null,orig:null}; // price/orig: 숫자(원). 비우면 가격 줄 숨김
 const homeAd=()=>{const a=HOME_AD;if(!a)return store.get('me',0)?`<div class="adhome empty"><div class="ah-img">📦</div><div class="ah-t"><span class="adb">추천템 자리</span><b>여기에 상품이 들어가요</b><span class="abd">쉐어링크를 보내주면 채워져요 (이 칸은 본인 브라우저에만 보여요)</span></div></div>`:'';
-  return `<div class="adhome"><a href="${a.url}" target="_blank" rel="sponsored noopener noreferrer"><img src="${a.img}" alt="" loading="lazy"><div class="ah-t"><span class="adb">오늘의 추천템</span><b>${esc(a.name)}</b><span class="abd">${esc(a.desc)}</span><span class="abgo">토스쇼핑에서 보기 ›</span></div></a><div class="disc">이 포스팅은 토스쇼핑 쉐어링크 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</div></div>`};
+  return `<div class="adhome"><a href="${a.url}" target="_blank" rel="sponsored noopener noreferrer"><img src="${a.img}" alt="" loading="lazy"><div class="ah-t"><span class="adb">오늘의 추천템</span><b>${esc(a.name)}</b><span class="abd">${esc(a.desc)}</span>${a.price?`<div class="ah-price">${a.orig&&a.orig>a.price?`<span class="ah-off">${Math.round((1-a.price/a.orig)*100)}%</span>`:''}<b>${a.price.toLocaleString('ko-KR')}원</b>${a.orig&&a.orig>a.price?`<s>${a.orig.toLocaleString('ko-KR')}원</s>`:''}</div>`:''}<span class="abgo">토스쇼핑에서 보기 ›</span></div></a><div class="disc">이 포스팅은 토스쇼핑 쉐어링크 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</div></div>`};
 const adBig=()=>{const a=ADS[0];return `<div class="adbig"><a href="${a.url}" target="_blank" rel="sponsored noopener noreferrer"><img src="${a.img}" alt="" width="120" height="120"><div class="abt"><span class="adb">밤샘 투자자 추천템</span><b>${esc(a.name)}</b><span class="abd">${esc(a.desc)}</span><span class="abgo">토스쇼핑에서 보기 ›</span></div></a><div class="disc">이 포스팅은 토스쇼핑 쉐어링크 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</div></div>`};
 const adSlot=()=>`<div class="ad">${ADS.map(a=>`<a class="adc" href="${a.url}" target="_blank" rel="sponsored noopener noreferrer"><img src="${a.img}" alt="" loading="lazy" width="76" height="76"><div class="adt"><span class="adb">추천템</span><b>${esc(a.name)}</b><span>${esc(a.desc)}</span></div><span class="adgo">보러가기 ›</span></a>`).join('')}<div class="disc">이 포스팅은 토스쇼핑 쉐어링크 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</div></div>`;
 const won=v=>v==null?'-':Math.round(v).toLocaleString('ko-KR')+'원';
