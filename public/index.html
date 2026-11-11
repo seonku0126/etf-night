@@ -221,7 +221,11 @@ let view={name:(t=>['rank','cats','whale','fav'].includes(t)?t:'rank')(store.get
 // ---------- 제휴 상품 자리 (토스쇼핑 쉐어링크) ----------
 const ADS=[{img:'img/ad-charger.jpg',name:'맥도도 GaN 67W 케이블 일체형 2포트 충전기',desc:'케이블 챙길 필요 없이 바로 충전',url:'https://toss.shopping/_m/roX3Fs9A'}];
 // 홈(순위) 화면 큰 상품 칸: HOME_AD에 상품을 넣으면 모두에게 보이고, 비어 있으면 본인(?me) 브라우저에만 빈 칸 미리보기
-const HOME_AD={img:'img/ad-gyul.jpg',name:'제주 산지직송 햇감귤 3kg',desc:'밤샘 차트 보면서 까먹기 좋은 제철 감귤',url:'https://toss.shopping/_m/jRfwWrVf',price:5900,orig:30000}; // price/orig: 숫자(원). 비우면 가격 줄 숨김
+const HOME_ADS=[ // 시간이 되면 자동 교체 (from 시각부터 표시, 한국시간)
+ {from:'2026-11-11T00:00:00+09:00',img:'img/ad-gyul.jpg',name:'제주 산지직송 햇감귤 3kg',desc:'밤샘 차트 보면서 까먹기 좋은 제철 감귤',url:'https://toss.shopping/_m/jRfwWrVf',price:5900,orig:30000},
+ {from:'2026-11-12T19:50:00+09:00',img:'img/ad-jumeok.jpg',name:'애슐리 주먹밥 체험팩 7가지맛 (100g×7개)',desc:'미국장 기다리며 전자레인지 2분 야식',url:'https://toss.shopping/_m/RI1ipfte',price:9900,orig:19750},
+];
+const HOME_AD=(()=>{const now=Date.now();let a=null;for(const x of HOME_ADS)if(Date.parse(x.from)<=now)a=x;return a})();
 const homeAd=()=>{const a=HOME_AD;if(!a)return store.get('me',0)?`<div class="adhome empty"><div class="ah-img">📦</div><div class="ah-t"><span class="adb">추천템 자리</span><b>여기에 상품이 들어가요</b><span class="abd">쉐어링크를 보내주면 채워져요 (이 칸은 본인 브라우저에만 보여요)</span></div></div>`:'';
   return `<div class="adhome"><a href="${a.url}" target="_blank" rel="sponsored noopener noreferrer"><img src="${a.img}" alt="" loading="lazy"><div class="ah-t"><span class="adb">오늘의 추천템</span><b>${esc(a.name)}</b><span class="abd">${esc(a.desc)}</span>${a.price?`<div class="ah-price">${a.orig&&a.orig>a.price?`<span class="ah-off">${Math.round((1-a.price/a.orig)*100)}%</span>`:''}<b>${a.price.toLocaleString('ko-KR')}원</b>${a.orig&&a.orig>a.price?`<s>${a.orig.toLocaleString('ko-KR')}원</s>`:''}</div>`:''}<span class="abgo">토스쇼핑에서 보기 ›</span></div></a><div class="disc">이 포스팅은 토스쇼핑 쉐어링크 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</div></div>`};
 const adBig=()=>{const a=ADS[0];return `<div class="adbig"><a href="${a.url}" target="_blank" rel="sponsored noopener noreferrer"><img src="${a.img}" alt="" width="120" height="120"><div class="abt"><span class="adb">밤샘 투자자 추천템</span><b>${esc(a.name)}</b><span class="abd">${esc(a.desc)}</span><span class="abgo">토스쇼핑에서 보기 ›</span></div></a><div class="disc">이 포스팅은 토스쇼핑 쉐어링크 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</div></div>`};
