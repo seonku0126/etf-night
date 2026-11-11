@@ -1,0 +1,14 @@
+name: research
+on:
+  push:
+    branches: [research]
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: node research/inverse.mjs
+      - uses: actions/upload-artifact@v4
+        with: { name: data, path: out/data.json }
