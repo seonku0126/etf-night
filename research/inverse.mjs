@@ -6,7 +6,7 @@ const num = (s) => Number(String(s ?? '').replace(/[,+]/g, '')) || 0;
 async function j(url) { const r = await fetch(url, { headers: UA }); const t = await r.text(); try { return JSON.parse(t); } catch (e) { console.log('NOTJSON', url, r.status, t.slice(0, 200)); return null; } }
 const out = { inv: {}, kospi: [] };
 // 1) 투자자별 매매 (bizdate 페이징 시도)
-for (const code of ['114800', '252670']) {
+for (const code of ['114800', '252670', '069500', '122630']) {
   const rows = new Map(); let biz = '';
   for (let k = 0; k < 200; k++) {
     const url = `https://m.stock.naver.com/api/stock/${code}/trend?pageSize=60${biz ? `&bizdate=${biz}` : ''}`;
@@ -26,7 +26,15 @@ for (const code of ['114800', '252670']) {
   out.inv[code] = [...rows.values()].sort((a, b) => a.d.localeCompare(b.d));
   console.log(code, out.inv[code].length, out.inv[code][0]?.d, out.inv[code].at(-1)?.d);
 }
-// 2) 코스피 일봉 (Yahoo)
+// 2) 미국 지수·환율 (Yahoo)
+out.us = {};
+for (const sym of ['%5EGSPC', '%5EIXIC', 'KRW%3DX']) {
+  const yy = await j(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=11y&interval=1d`);
+  const rr = yy?.chart?.result?.[0];
+  if (rr) out.us[decodeURIComponent(sym)] = rr.timestamp.map((t, i) => ({ d: new Date((t + rr.meta.gmtoffset * 1000 / 1000) * 1000).toISOString().slice(0, 10).replace(/-/g, ''), c: rr.indicators.quote[0].close[i] })).filter((x) => x.c != null);
+  console.log(sym, out.us[decodeURIComponent(sym)]?.length);
+}
+// 3) 코스피 일봉 (Yahoo)
 const y = await j('https://query1.finance.yahoo.com/v8/finance/chart/%5EKS11?range=11y&interval=1d');
 const r = y?.chart?.result?.[0];
 if (r) { const ts = r.timestamp, c = r.indicators.quote[0].close, o = r.indicators.quote[0].open;
