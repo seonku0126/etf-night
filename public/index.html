@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0f1115">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://abacus.jasoncameron.dev; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://abacus.jasoncameron.dev https://etf-night-mkt.seonku0126.workers.dev; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="description" content="데이앤나잇 ETF — 국내 상장 해외 ETF의 밤사이 추정 가치(iNAV), 외국인·기관 큰손 동향, 자금 유입 순위">
 <link rel="icon" href="icon.svg">
@@ -161,6 +161,8 @@ h1{font-size:21px;letter-spacing:-.3px}
 .heat{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
 .ht{border-radius:10px;padding:8px 4px;text-align:center;animation:fin .5s both}
 .ht span{display:block;font-size:11px;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ht b{display:block;font-size:14px;font-weight:900;color:#fff;letter-spacing:-.3px}
+
+.noanim .mcard,.noanim .mt,.noanim .ht{animation:none}
 @keyframes fin{from{opacity:0;transform:translateY(6px)}}
 .banner{background:linear-gradient(135deg,#1c2130,#161a22);border:1px solid #2a3142;border-radius:18px;padding:14px;margin-bottom:12px}
 .banner .bt{font-size:13px;color:#c9ced8;font-weight:600}
@@ -328,11 +330,15 @@ function mktDash(){
   const big=['NVDA','AAPL','MSFT','AMZN','GOOGL','META','TSLA','AVGO','AMD','TSM','MU','PLTR'].filter(k=>Q[k]);
   const heat=big.map((k,i)=>{const v=Q[k].pc||0,a=Math.min(1,Math.abs(v)/5)*.75+.15;const bg=v>0.005?`rgba(255,90,95,${a})`:v<-0.005?`rgba(78,140,255,${a})`:'rgba(255,255,255,.08)';return `<div class="ht" style="background:${bg};animation-delay:${i*30}ms"><span>${esc(Q[k].n)}</span><b>${mpct(v)}</b></div>`}).join('');
   const bs=big.length?mses(Q[big[0]]):'';
-  return `<div class="mkt"><div class="mh"><b>🌍 지금 글로벌 시장</b><span><i class="live"></i>${at} 기준</span></div>
+  return `<div class="mkt"><div class="mh"><b>🌍 지금 글로벌 시장</b><span>${MKT.live?`<i class="live"></i>실시간 · ${at}`:`${at} 기준`}</span></div>
   <div class="mhero">${hero('NQ=F')}${hero('ES=F')}</div>
   <div class="mgrid">${['^SOX','KRW=X','^VIX','^TNX','GC=F','CL=F','BTC-USD','YM=F'].map(tile).join('')}</div>
   ${heat?`<div class="msub">빅테크 ${bs==='프리'?'프리마켓':bs==='애프터'?'애프터마켓':bs==='마감'?'(전일 마감)':'실시간'}<span>전일 종가 대비</span></div><div class="heat">${heat}</div>`:''}</div>`;
 }
+
+const LIVE='https://etf-night-mkt.seonku0126.workers.dev/mkt';
+async function liveMkt(){if(document.hidden)return;try{const r=await fetch(LIVE,{cache:'no-store'});if(!r.ok)return;const d=await r.json();if(!d||!d.q||!Object.keys(d.q).length)return;MKT=d;const el=document.querySelector('.mkt');if(el){const t=document.createElement('div');t.innerHTML=mktDash();const n=t.firstElementChild;if(n){n.classList.add('noanim');el.replaceWith(n)}}else if(view.name==='rank'&&!pfForm)render()}catch(e){}}
+setInterval(liveMkt,30000);document.addEventListener('visibilitychange',liveMkt);
 function nightBanner(){
   const g=k=>{const a=LIST.filter(x=>x.cat===k&&x.pct!=null&&!x.w&&!/레버리지|인버스|\(H\)/.test(x.name));return a.length?a.reduce((s,x)=>s+x.pct,0)/a.length:null};
   const all=LIST.filter(x=>x.pct!=null&&!x.w&&!/레버리지|인버스/.test(x.name));
@@ -613,13 +619,13 @@ function status(){if(META){const d=new Date(META.at);$('#status').textContent='�
   const v=()=>'?t='+Math.floor(Date.now()/300000); // 5분 단위 캐시
   const get=async p=>{try{const r=await fetch('data/'+p+'.json'+v(),{cache:'no-cache'});return r.ok?await r.json():null}catch(e){return null}};
   async function load(){
-    const [m,w,mk]=await Promise.all([get('meta'),get('whale'),get('mkt')]);if(mk)MKT=mk;const ds=m?await Promise.all(Array.from({length:Math.ceil((m.n||0)/50)},(_,k)=>get('d'+k))):[];
+    const [m,w,mk]=await Promise.all([get('meta'),get('whale'),get('mkt')]);if(mk&&!(MKT&&MKT.live))MKT=mk;const ds=m?await Promise.all(Array.from({length:Math.ceil((m.n||0)/50)},(_,k)=>get('d'+k))):[];
     if(!m){if(!META)$('#status').textContent='데이터를 불러오지 못했어요. 잠시 후 다시 열어주세요';return}
     META=m;LIST=(META.list||[]).map(x=>({code:x.c,name:x.n,price:x.p,cap:x.cap,ch:x.ch,amt:x.amt,fb:x.fb,fbd:x.fbd,est:x.est,pct:x.pct,pr:x.pr,w:x.w,cat:catOf(x.n)}));
     if(w)WH=w;DET={};for(const d of ds)if(d&&d.items)Object.assign(DET,d.items);DATA={};
     applyWH();status();if(!pfForm)render();
   }
-  await load();
+  await load();liveMkt();
   if(/[?&]me(=|&|$)/.test(location.search)){store.set('me',1);toast('이 브라우저는 방문자 수에서 빠졌어요');history.replaceState(null,'',location.pathname);render()}
   const BOT=/bot|crawl|spider|slurp|Yeti|Daum|Headless|Lighthouse|preview|facebookexternalhit|kakaotalk-scrap/i.test(navigator.userAgent);
   if(!store.get('me',0)&&!navigator.webdriver&&!BOT)try{const d=new Date(Date.now()+9*3600e3).toISOString().slice(0,10).replace(/-/g,''),H='https://abacus.jasoncameron.dev/hit/daynnightetf/';
