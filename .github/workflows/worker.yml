@@ -1,0 +1,30 @@
+name: 실시간 시세 Worker 배포
+on:
+  push:
+    branches: [main]
+    paths: ['worker/**', '.github/workflows/worker.yml']
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: workers.dev 주소 준비 (처음 한 번)
+        env:
+          T: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          A: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          A=$(echo "$A" | tr -d '[:space:]')
+          S=$(curl -s -H "Authorization: Bearer $T" https://api.cloudflare.com/client/v4/accounts/$A/workers/subdomain | jq -r '.result.subdomain // empty')
+          if [ -z "$S" ]; then
+            for c in daynnightetf daynnight-etf daynnightetf-$RANDOM; do
+              S=$(curl -s -X PUT -H "Authorization: Bearer $T" -H 'Content-Type: application/json' -d "{\"subdomain\":\"$c\"}" https://api.cloudflare.com/client/v4/accounts/$A/workers/subdomain | jq -r '.result.subdomain // empty')
+              [ -n "$S" ] && break
+            done
+          fi
+          echo "SUBDOMAIN=$S"
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
