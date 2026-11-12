@@ -138,6 +138,30 @@ h1{font-size:21px;letter-spacing:-.3px}
 .seg button{font-size:14px;padding:8px 13px}
 .li .np{font-size:21px;font-weight:800;letter-spacing:-.4px;line-height:1.1}
 .li .ns{font-size:12px;color:var(--mute);margin-top:4px}
+.mkt{position:relative;border-radius:20px;padding:14px 12px 12px;margin-bottom:12px;background:radial-gradient(120% 80% at 0% 0%,rgba(255,90,95,.16),transparent 55%),radial-gradient(120% 90% at 100% 0%,rgba(78,140,255,.18),transparent 55%),linear-gradient(160deg,#1a1f2c,#12151c);border:1px solid #2b3245;overflow:hidden}
+.mkt:before{content:"";position:absolute;inset:-1px;border-radius:20px;padding:1px;background:linear-gradient(110deg,transparent 30%,rgba(245,197,66,.55) 50%,transparent 70%);background-size:250% 100%;animation:mshine 5s linear infinite;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+@keyframes mshine{to{background-position:-250% 0}}
+.mh{display:flex;justify-content:space-between;align-items:center;margin:0 2px 10px}
+.mh b{font-size:15px;letter-spacing:-.3px}.mh span{font-size:11.5px;color:var(--mute);display:flex;align-items:center;gap:6px}
+.live{width:7px;height:7px;border-radius:50%;background:#2ee59d;box-shadow:0 0 0 0 rgba(46,229,157,.6);animation:pulse 1.8s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 7px rgba(46,229,157,0)}100%{box-shadow:0 0 0 0 rgba(46,229,157,0)}}
+.mhero{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mcard{background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:10px 10px 6px;animation:fin .5s both}
+.mcard .mn{font-size:11.5px;color:#aeb4c0;display:flex;justify-content:space-between}.mcard .mn i{font-style:normal;font-size:10px;padding:0 5px;border-radius:6px;background:rgba(255,255,255,.08);color:#cfd4dd}
+.mcard .mp{font-size:25px;font-weight:900;letter-spacing:-.8px;margin-top:3px;line-height:1.1}
+.mcard .mv{font-size:12px;color:#c9ced8;margin-top:1px}
+.mcard svg{display:block;width:100%;height:34px;margin-top:4px}
+.mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.mt{background:rgba(0,0,0,.22);border-radius:12px;padding:7px 6px 5px;text-align:center;animation:fin .5s both}
+.mt span{display:block;font-size:10.5px;color:#9aa1ad;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt b{display:block;font-size:14.5px;font-weight:800;letter-spacing:-.4px;margin-top:1px}
+.mt small{display:block;font-size:10.5px;color:#c9ced8}
+.mt svg{display:block;width:100%;height:16px;margin-top:3px}
+.msub{font-size:12px;color:#c9ced8;font-weight:700;margin:12px 2px 6px;display:flex;justify-content:space-between}.msub span{font-weight:400;color:var(--mute);font-size:11px}
+.heat{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.ht{border-radius:10px;padding:8px 4px;text-align:center;animation:fin .5s both}
+.ht span{display:block;font-size:11px;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ht b{display:block;font-size:14px;font-weight:900;color:#fff;letter-spacing:-.3px}
+@keyframes fin{from{opacity:0;transform:translateY(6px)}}
 .banner{background:linear-gradient(135deg,#1c2130,#161a22);border:1px solid #2a3142;border-radius:18px;padding:14px;margin-bottom:12px}
 .banner .bt{font-size:13px;color:#c9ced8;font-weight:600}
 .nbs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
@@ -224,6 +248,7 @@ const ADS=[{img:'img/ad-charger.jpg',name:'맥도도 GaN 67W 케이블 일체형
 const HOME_ADS=[ // 시간이 되면 자동 교체 (from 시각부터 표시, 한국시간)
  {from:'2026-11-11T00:00:00+09:00',img:'img/ad-gyul.jpg',name:'제주 산지직송 햇감귤 3kg',desc:'밤샘 차트 보면서 까먹기 좋은 제철 감귤',url:'https://toss.shopping/_m/jRfwWrVf',price:5900,orig:30000},
  {from:'2026-11-12T19:50:00+09:00',img:'img/ad-jumeok.jpg',name:'애슐리 주먹밥 체험팩 7가지맛 (100g×7개)',desc:'미국장 기다리며 전자레인지 2분 야식',url:'https://toss.shopping/_m/RI1ipfte',price:9900,orig:19750},
+ {from:'2026-11-12T20:40:00+09:00',img:'img/ad-anker.jpg',name:'앤커 랩탑 파워뱅크 25000mAh 165W (C타입 케이블 일체형)',desc:'밤새 차트 봐도 노트북·폰 배터리 걱정 끝',url:'https://toss.shopping/_m/791CO0Kz'},
 ];
 const HOME_AD=(()=>{const now=Date.now();let a=null;for(const x of HOME_ADS)if(Date.parse(x.from)<=now)a=x;return a})();
 const homeAd=()=>{const a=HOME_AD;if(!a)return store.get('me',0)?`<div class="adhome empty"><div class="ah-img">📦</div><div class="ah-t"><span class="adb">추천템 자리</span><b>여기에 상품이 들어가요</b><span class="abd">쉐어링크를 보내주면 채워져요 (이 칸은 본인 브라우저에만 보여요)</span></div></div>`:'';
@@ -287,6 +312,27 @@ function shareNow(){
   else{try{navigator.clipboard.writeText(text+'\n'+url);toast('링크를 복사했어요')}catch(e){prompt('링크를 복사하세요',url)}}
 }
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800)}
+
+// ---------- 홈 시장 대시보드 ----------
+let MKT=null;
+const spk=(a,c,h)=>{if(!a||a.length<2)return'';const mn=Math.min(...a),mx=Math.max(...a),r=mx-mn||1,W=100;const pts=a.map((v,i)=>[(i/(a.length-1))*W,h-2-((v-mn)/r)*(h-4)]);const d=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join('');const id='g'+Math.random().toString(36).slice(2,7);return `<svg viewBox="0 0 ${W} ${h}" preserveAspectRatio="none"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c}" stop-opacity=".35"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></linearGradient></defs><path d="${d}L${W} ${h}L0 ${h}Z" fill="url(#${id})"/><path d="${d}" fill="none" stroke="${c}" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>`};
+const mcol=v=>v==null?'#8a919e':v>0.005?'#ff5a5f':v<-0.005?'#4e8cff':'#8a919e';
+const mpct=v=>v==null?'-':(v>0?'▲':v<-0.005?'▼':'')+Math.abs(v).toFixed(2)+'%';
+const mses=q=>Date.now()/1000-q.t>3*3600?'마감':q.ses==='pre'?'프리':q.ses==='post'?'애프터':'';
+const mval=(k,p)=>k==='KRW=X'?p.toLocaleString('ko-KR',{maximumFractionDigits:1})+'원':k==='^TNX'?p.toFixed(2)+'%':k==='^VIX'?p.toFixed(2):(k==='BTC-USD'||k==='GC=F'||k==='CL=F'||!/[=^]/.test(k))?'$'+p.toLocaleString('en-US',{maximumFractionDigits:p>=1000?0:2}):p.toLocaleString('en-US',{maximumFractionDigits:p>=1000?0:2});
+function mktDash(){
+  const Q=MKT&&MKT.q;if(!Q||!Object.keys(Q).length)return'';
+  const at=new Date(MKT.at).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
+  const hero=k=>{const q=Q[k];if(!q)return'';const c=mcol(q.pc),se=mses(q);return `<div class="mcard"><div class="mn">${esc(q.n)}${se?`<i>${se}</i>`:''}</div><div class="mp" style="color:${c}">${mpct(q.pc)}</div><div class="mv">${mval(k,q.p)}</div>${spk(q.sp,c,34)}</div>`};
+  const tile=(k,i)=>{const q=Q[k];if(!q)return'';const c=mcol(k==='^VIX'?-q.pc:q.pc);return `<div class="mt" style="animation-delay:${i*40}ms"><span>${esc(q.n.replace(' 공포지수','').replace('필라델피아 ',''))}${mses(q)==='마감'?' ·전일':''}</span><b>${mval(k,q.p)}</b><small style="color:${mcol(q.pc)}">${mpct(q.pc)}</small>${spk(q.sp,c,16)}</div>`};
+  const big=['NVDA','AAPL','MSFT','AMZN','GOOGL','META','TSLA','AVGO','AMD','TSM','MU','PLTR'].filter(k=>Q[k]);
+  const heat=big.map((k,i)=>{const v=Q[k].pc||0,a=Math.min(1,Math.abs(v)/5)*.75+.15;const bg=v>0.005?`rgba(255,90,95,${a})`:v<-0.005?`rgba(78,140,255,${a})`:'rgba(255,255,255,.08)';return `<div class="ht" style="background:${bg};animation-delay:${i*30}ms"><span>${esc(Q[k].n)}</span><b>${mpct(v)}</b></div>`}).join('');
+  const bs=big.length?mses(Q[big[0]]):'';
+  return `<div class="mkt"><div class="mh"><b>🌍 지금 글로벌 시장</b><span><i class="live"></i>${at} 기준</span></div>
+  <div class="mhero">${hero('NQ=F')}${hero('ES=F')}</div>
+  <div class="mgrid">${['^SOX','KRW=X','^VIX','^TNX','GC=F','CL=F','BTC-USD','YM=F'].map(tile).join('')}</div>
+  ${heat?`<div class="msub">빅테크 ${bs==='프리'?'프리마켓':bs==='애프터'?'애프터마켓':bs==='마감'?'(전일 마감)':'실시간'}<span>전일 종가 대비</span></div><div class="heat">${heat}</div>`:''}</div>`;
+}
 function nightBanner(){
   const g=k=>{const a=LIST.filter(x=>x.cat===k&&x.pct!=null&&!x.w&&!/레버리지|인버스|\(H\)/.test(x.name));return a.length?a.reduce((s,x)=>s+x.pct,0)/a.length:null};
   const all=LIST.filter(x=>x.pct!=null&&!x.w&&!/레버리지|인버스/.test(x.name));
@@ -401,7 +447,7 @@ function rankView(){
   const fbd=(LIST.find(x=>x.fbd)||{}).fbd;
   const note={nightUp:'한국 장 마감 뒤 지금까지 오른 순 (마감 iNAV 대비)',nightDown:'한국 장 마감 뒤 지금까지 내린 순 (마감 iNAV 대비)',amt:'오늘 한국 장 거래대금',fbuy:`외국인 순매수 금액 (${fbd?fbd.slice(4,6)+'/'+fbd.slice(6):''} 기준)`,fsell:`외국인 순매도 금액 (${fbd?fbd.slice(4,6)+'/'+fbd.slice(6):''} 기준)`,todayUp:'오늘 한국 장 등락률',todayDown:'오늘 한국 장 등락률'}[k];
   const seg=RANKS.map(r=>`<button class="${rankKey===r[0]?'on':''}" onclick="rankKey='${r[0]}';render()">${r[1]}</button>`).join('');
-  return `${nightBanner()}${homeAd()}<div class="seg">${seg}</div><div class="note">${note} · 상위 ${xs.length}개</div><div class="list">${xs.map((x,i)=>li(x,i,right(x))).join('')||'<div class="empty">데이터가 없어요</div>'}</div>${adSlot()}`;
+  return `${mktDash()}${nightBanner()}${homeAd()}<div class="seg">${seg}</div><div class="note">${note} · 상위 ${xs.length}개</div><div class="list">${xs.map((x,i)=>li(x,i,right(x))).join('')||'<div class="empty">데이터가 없어요</div>'}</div>${adSlot()}`;
 }
 function card(code){
   const d=DATA[code],m=LIST.find(x=>x.code===code)||{};
@@ -561,13 +607,13 @@ $('#q').addEventListener('input',e=>{
 });
 function pick(code){$('#q').value='';$('#res').style.display='none';openD(code)}
 document.addEventListener('click',e=>{if(!e.target.closest('.search'))$('#res').style.display='none'});
-function status(){if(META){const d=new Date(META.at);$('#status').textContent='밤 추정 '+d.toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false})+' 계산 · 22:40·02:40·06:40·08:40 자동 갱신'}}
+function status(){if(META){const d=new Date(META.at);$('#status').textContent='밤 추정 '+d.toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false})+' 계산 · 08:40·17:58·19:58·21:30·22:35·23:28 자동 갱신'}}
 (async()=>{
   render();
   const v=()=>'?t='+Math.floor(Date.now()/300000); // 5분 단위 캐시
   const get=async p=>{try{const r=await fetch('data/'+p+'.json'+v(),{cache:'no-cache'});return r.ok?await r.json():null}catch(e){return null}};
   async function load(){
-    const [m,w]=await Promise.all([get('meta'),get('whale')]);const ds=m?await Promise.all(Array.from({length:Math.ceil((m.n||0)/50)},(_,k)=>get('d'+k))):[];
+    const [m,w,mk]=await Promise.all([get('meta'),get('whale'),get('mkt')]);if(mk)MKT=mk;const ds=m?await Promise.all(Array.from({length:Math.ceil((m.n||0)/50)},(_,k)=>get('d'+k))):[];
     if(!m){if(!META)$('#status').textContent='데이터를 불러오지 못했어요. 잠시 후 다시 열어주세요';return}
     META=m;LIST=(META.list||[]).map(x=>({code:x.c,name:x.n,price:x.p,cap:x.cap,ch:x.ch,amt:x.amt,fb:x.fb,fbd:x.fbd,est:x.est,pct:x.pct,pr:x.pr,w:x.w,cat:catOf(x.n)}));
     if(w)WH=w;DET={};for(const d of ds)if(d&&d.items)Object.assign(DET,d.items);DATA={};

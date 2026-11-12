@@ -64,7 +64,9 @@ jobs:
         if: steps.what.outputs.job == 'inav' || steps.what.outputs.job == 'all' || (steps.what.outputs.job == 'deploy' && hashFiles('.data/meta.json') == '')
         env: { CACHE_DIR: '../.cache', OUT_DIR: '../.data' }
         working-directory: engine
-        run: timeout 1200 node run_all.mjs 150 2>&1 | grep -v EHPA | tail -3
+        run: |
+          timeout 1200 node run_all.mjs 150 2>&1 | grep -v EHPA | tail -3
+          timeout 60 node market.mjs 2>&1 | grep -v EHPA | tail -1 || true
 
       - name: 큰손 데이터 계산
         if: steps.what.outputs.job == 'whale' || steps.what.outputs.job == 'all' || (steps.what.outputs.job == 'deploy' && hashFiles('.data/whale.json') == '')
