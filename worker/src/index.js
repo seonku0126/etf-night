@@ -47,11 +47,13 @@ async function px() {
       const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/130 Safari/537.36' } });
       if (!r.ok) return;
       for (const x of ((await r.json()).spark || {}).result || []) {
-        const R = x.response && x.response[0]; if (!R || !R.timestamp) continue;
-        const m = R.meta || {}, cl = R.indicators.quote[0].close;
+        const R = x.response && x.response[0]; if (!R) continue;
+        const m = R.meta || {}, cl = (R.indicators && R.indicators.quote && R.indicators.quote[0].close) || [];
+        const reg = m.regularMarketPrice != null ? +m.regularMarketPrice.toPrecision(7) : null, regTs = m.regularMarketTime || 0;
         let i = cl.length - 1; while (i >= 0 && cl[i] == null) i--;
-        if (i < 0) continue;
-        q[x.symbol] = [+cl[i].toPrecision(7), R.timestamp[i], m.regularMarketPrice != null ? +m.regularMarketPrice.toPrecision(7) : null, m.regularMarketTime || 0];
+        if (i >= 0 && R.timestamp) q[x.symbol] = [+cl[i].toPrecision(7), R.timestamp[i], reg, regTs];
+        else if (reg != null) q[x.symbol] = [reg, regTs, reg, regTs];
+        else continue;
         const per = (m.currentTradingPeriod || {}).regular;
         if (open === null && per && !/[=^]|-USD|\./.test(x.symbol)) { const n = Date.now() / 1000; open = n >= per.start && n < per.end; }
       }
