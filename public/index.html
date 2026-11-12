@@ -227,6 +227,29 @@ button:active,.cat:active,.seg button:active{transform:scale(.94)}
 .tabs button:active{transform:scale(.92)}
 .cat:hover,.li:hover{background:#1c2029}
 
+
+.evc{display:block;width:100%;text-align:left;background:linear-gradient(150deg,#1c2232,#151922);border:1px solid #2b3245;border-radius:18px;padding:14px;margin-bottom:10px;color:var(--ink);font:inherit}
+.evh{display:flex;align-items:center;gap:10px}.evh>div{flex:1}.evh b{display:block;font-size:17px}.evh span{font-size:12px;color:var(--mute)}
+.evi{font-size:28px}.evh em{font-style:normal;font-weight:900;font-size:16px;color:var(--acc);text-shadow:0 0 10px rgba(245,197,66,.6);animation:glow 2s infinite}
+.evs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.evs div{background:rgba(0,0,0,.25);border-radius:12px;padding:9px 10px}
+.evs span{display:block;font-size:11.5px;color:var(--mute)}.evs b{font-size:15px}.evs i{font-style:normal}
+.evgo{margin-top:10px;font-size:13px;color:var(--acc);font-weight:700;text-align:right}
+.evhero{text-align:center;border-radius:20px;padding:18px 14px;background:radial-gradient(120% 90% at 50% 0%,rgba(118,185,0,.22),transparent 60%),linear-gradient(160deg,#1a1f2c,#12151c);border:1px solid #2b3245;margin-top:10px}
+.evi2{font-size:40px}.evd{font-size:30px;font-weight:900;color:var(--acc);text-shadow:0 0 14px rgba(245,197,66,.6);animation:glow 2s infinite}
+.evw{font-size:13px;color:#c9ced8;margin-top:4px;line-height:1.5}
+.evbig{font-size:18px;font-weight:800;margin-top:14px;line-height:1.5}.evbig b{color:var(--acc)}.evbig .up,.evbig .down{font-size:24px;font-weight:900}
+.evgauge{position:relative;height:26px;border-radius:13px;background:rgba(78,140,255,.35);margin-top:12px;overflow:hidden}
+.evgauge i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#ff5a5f,#ff8a6a);border-radius:13px;box-shadow:0 0 14px rgba(255,90,95,.6)}
+.evgauge span{position:relative;font-size:13px;font-weight:800;line-height:26px}
+.evgrid{display:grid;grid-template-columns:1fr;gap:8px;margin:10px 0}
+.evst{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
+.evn{font-size:13px;color:#c9ced8;font-weight:700}.evn small{font-size:10.5px;color:var(--mute);border:1px solid var(--line);border-radius:6px;padding:0 4px;margin-left:4px}
+.evb{display:flex;justify-content:space-between;align-items:baseline;margin-top:4px}.evb b{font-size:24px;font-weight:900}.evb b small{font-size:13px;color:var(--mute);font-weight:600}.evb span{font-weight:800}
+.evbar{height:6px;border-radius:3px;background:rgba(78,140,255,.35);margin-top:6px;overflow:hidden}.evbar i{display:block;height:100%;background:#ff5a5f;border-radius:3px}
+.evm{font-size:12px;color:var(--mute);margin-top:6px}.evl{font-size:12px;color:var(--mute);margin-top:4px}.evl i{font-style:normal;margin-left:6px;font-weight:700}
+.evtw{overflow-x:auto;margin:6px 0 10px;border:1px solid var(--line);border-radius:12px}
+.evt{border-collapse:collapse;width:100%;font-size:12.5px;white-space:nowrap}.evt th{background:#1c2029;color:var(--mute);font-weight:600;padding:8px 8px;text-align:right;position:sticky;top:0}.evt th:first-child,.evt td:first-child{text-align:left}
+.evt td{padding:7px 8px;border-top:1px solid var(--line);text-align:right;font-weight:700}
 /* ---- 반짝이는 글씨 ---- */
 h1{background:linear-gradient(90deg,#fff 0%,#fff 35%,#ffe9a8 45%,#fff 55%,#fff 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:tshine 4.5s linear infinite}
 h1 span{background:linear-gradient(90deg,#f5c542,#ffde7a,#ff9f43,#f5c542);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:tshine 3s linear infinite;filter:drop-shadow(0 0 8px rgba(245,197,66,.55))}
@@ -248,7 +271,7 @@ h1 span{background:linear-gradient(90deg,#f5c542,#ffde7a,#ff9f43,#f5c542);backgr
   <div class="sub" id="status">불러오는 중…</div>
   <div class="search"><input id="q" placeholder="🔍 ETF 이름으로 검색 (예: 나스닥, S&P500)" autocomplete="off"><div class="results" id="res"></div></div>
 </header>
-<nav class="tabs"><button data-t="rank">순위</button><button data-t="cats">카테고리</button><button data-t="whale">큰손</button><button data-t="fav">관심</button></nav>
+<nav class="tabs"><button data-t="rank">순위</button><button data-t="events">일정</button><button data-t="cats">카테고리</button><button data-t="whale">큰손</button><button data-t="fav">관심</button></nav>
 <main id="main"><div class="empty">불러오는 중…</div></main>
 <footer>추정치이며 투자 권유가 아닙니다. 마감 iNAV, 구성종목 비중, 미국 시세, 원/달러 환율로 계산합니다. 미국 정규장이 닫혀 있을 때 큰 숫자는 종목별 프리·애프터마켓 가격(거래가 없으면 지수 선물)을 반영한 값입니다. 밤 추정은 시가총액 상위 150개만 계산하고, 거래대금·등락률은 한국 장 기준, 외국인 순매수는 전 거래일 기준입니다.</footer>
 <script>
@@ -256,7 +279,7 @@ const $=s=>document.querySelector(s);
 const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 let favs=store.get('favs',['133690','360750','381180']);
 let META=null,DET={},LIST=[],DATA={};
-let view={name:(t=>['rank','cats','whale','fav'].includes(t)?t:'rank')(store.get('tab2','rank'))},rankKey='nightUp',catSort='cap';
+let view={name:(t=>['rank','events','cats','whale','fav'].includes(t)?t:'rank')(store.get('tab2','rank'))},rankKey='nightUp',catSort='cap';
 // ---------- 제휴 상품 자리 (토스쇼핑 쉐어링크) ----------
 const ADS=[{img:'img/ad-charger.jpg',name:'맥도도 GaN 67W 케이블 일체형 2포트 충전기',desc:'케이블 챙길 필요 없이 바로 충전',url:'https://toss.shopping/_m/roX3Fs9A'}];
 // 홈(순위) 화면 큰 상품 칸: HOME_AD에 상품을 넣으면 모두에게 보이고, 비어 있으면 본인(?me) 브라우저에만 빈 칸 미리보기
@@ -382,6 +405,37 @@ async function livePx(){
   }catch(e){}
 }
 setInterval(livePx,60000);document.addEventListener('visibilitychange',livePx);
+
+// ---------- 일정 (과거 같은 상황 통계) ----------
+let EVD=null;
+const kstToday=()=>new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+const dday=d=>{const n=Math.round((Date.parse(d)-Date.parse(kstToday()))/864e5);return n>0?'D-'+n:n===0?'D-DAY':'지난 일정'};
+const kday=d=>{const t=new Date(d+'T12:00:00Z');return `${t.getUTCMonth()+1}월 ${t.getUTCDate()}일(${'일월화수목금토'[t.getUTCDay()]})`};
+const addDay=(d,n)=>new Date(Date.parse(d+'T12:00:00Z')+n*864e5).toISOString().slice(0,10);
+function openEv(id){push({name:'ev',id,tab:'events'})}
+function eventsView(){
+  if(!EVD||!EVD.ev.length)return '<div class="empty">일정을 불러오는 중이에요</div>';
+  const xs=EVD.ev.slice().sort((a,b)=>a.next<b.next?-1:1);
+  return `<div class="note">다가오는 일정과, 과거 같은 일이 있었던 다음 날 시장이 어떻게 움직였는지 보여줘요</div>`+xs.map(e=>{const k=e.assets[0][0],st=e.stats[k]||{},st2=e.stats['^NDX'];return `<button class="evc" onclick="openEv('${e.id}')">
+    <div class="evh"><span class="evi">${e.icon}</span><div><b>${esc(e.title)}</b><span>${kday(e.next)} · ${esc(e.when.split('→')[0].trim())}</span></div><em>${dday(e.next)}</em></div>
+    <div class="evs"><div><span>다음 날 ${esc(e.assets[0][1])}</span><b>${st.n}번 중 <i class="up">${st.up}번 상승</i></b></div>${st2?`<div><span>다음 날 나스닥100</span><b>${st2.n}번 중 <i class="up">${st2.up}번 상승</i></b></div>`:''}</div>
+    <div class="evgo">과거 기록 전부 보기 ›</div></button>`}).join('')+`<div class="note" style="margin-top:6px">과거 통계일 뿐 앞으로도 같다는 보장은 없어요. 투자 권유가 아닙니다.</div>`;
+}
+function evView(id){
+  const e=EVD&&EVD.ev.find(x=>x.id===id);if(!e)return '<div class="empty">일정을 찾지 못했어요</div>';
+  const main=e.assets[0][0],m=e.stats[main]||{},pct=m.n?Math.round(m.up/m.n*100):0;
+  const sc=e.assets.filter(a=>e.stats[a[0]]).map(([s,n,mk])=>{const t=e.stats[s];return `<div class="evst"><div class="evn">${esc(n)}${mk==='kr'?' <small>한국장</small>':''}</div><div class="evb"><b>${t.up}<small>/${t.n}번 상승</small></b><span class="${cls(t.avg)}">평균 ${sign(t.avg)}</span></div><div class="evbar"><i style="width:${Math.round(t.up/t.n*100)}%"></i></div><div class="evm">평균 움직임 ±${t.abs.toFixed(1)}% · 최고 <span class="up">${sign(t.max)}</span> · 최저 <span class="down">${sign(t.min)}</span></div><div class="evl">최근 4번 ${t.last4.map(v=>`<i class="${cls(v)}">${sign(v)}</i>`).join('')}</div></div>`}).join('');
+  const cols=e.assets.filter(a=>e.stats[a[0]]);
+  const tbl=`<div class="evtw"><table class="evt"><tr><th>발표일</th>${cols.map(a=>`<th>${esc(a[1].replace('TIGER ','').replace('미국필라델피아반도체나스닥','필라반도체').replace('미국나스닥100','나스닥100 ETF').replace('필라델피아 ',''))}</th>`).join('')}</tr>${e.rows.map(r=>`<tr><td>${r.d.slice(2).replace(/-/g,'.')}</td>${cols.map(a=>{const v=r.r[a[0]];return `<td class="${cls(v)}">${v==null?'-':sign(v)}</td>`}).join('')}</tr>`).join('')}</table></div>`;
+  return `<div class="evhero"><div class="evi2">${e.icon}</div><div class="evd">${dday(e.next)}</div><div class="evw">${kday(e.next)} 미국 장 마감 후 발표<br><b>한국시간 ${kday(addDay(e.next,1))} 새벽</b>에 결과가 나와요</div>
+   <div class="evbig">과거 <b>${m.n}번</b> 중 다음 날 ${esc(e.assets[0][1])}<br><span class="up">${m.up}번 상승</span> · <span class="down">${m.n-m.up}번 하락</span></div>
+   <div class="evgauge"><i style="width:${pct}%"></i><span>상승 확률 ${pct}%</span></div></div>
+   <div class="note" style="margin-top:12px">${esc(e.desc)}</div>
+   <div class="evgrid">${sc}</div>
+   <div class="note">회차별 다음 날 등락 (미국은 발표일 종가 대비 다음 날 종가, 한국장은 발표 다음 날 아침 시작한 거래일 기준)</div>${tbl}
+   <div class="disc">과거 ${m.n}번의 통계일 뿐 앞으로도 같다는 보장은 없어요. 투자 권유가 아닙니다. 한국 ETF는 상장 이후 기록만 있어요.</div>
+   <button class="sharebtn" onclick="shareNow()" style="margin-top:12px">↗ 친구에게 공유하기</button>`;
+}
 function nightBanner(){
   const g=k=>{const a=LIST.filter(x=>x.cat===k&&x.pct!=null&&!x.w&&!/레버리지|인버스|\(H\)/.test(x.name));return a.length?a.reduce((s,x)=>s+x.pct,0)/a.length:null};
   const all=LIST.filter(x=>x.pct!=null&&!x.w&&!/레버리지|인버스/.test(x.name));
@@ -609,6 +663,8 @@ function render(){
   else if(view.name==='cats')h=catsView();
   else if(view.name==='cat')h=catView(view.key);
   else if(view.name==='rank')h=rankView();
+  else if(view.name==='events')h=eventsView();
+  else if(view.name==='ev')h=evView(view.id);
   else if(view.name==='whale')h=whaleView();
   else if(view.name==='pf')h=pfView();
   else if(view.name==='detail'){
@@ -623,10 +679,10 @@ function render(){
     else h=detail(c).replace('onclick="home()">← 목록</button>','onclick="back()">← 목록</button>'+fb).replace('<div class="kv">',info+'<div class="kv">');
   }
   if(view.name==='detail')h+=whaleBox(view.code);
-  if(view.name==='detail'||view.name==='cat'||view.name==='pf'){
+  if(view.name==='detail'||view.name==='cat'||view.name==='pf'||view.name==='ev'){
     h=h.replace(/<button class="back"[^>]*>[^<]*<\/button>/g,'');
     let fav='';if(view.name==='detail'){const c=view.code;h=h.replace(/<button class="x" style="color:var\(--acc\);float:right;margin-top:-2px"[^>]*>[^<]*<\/button>/,'');fav=`<button class="tb-fav" onclick="toggleFav('${c}')">${favs.includes(c)?'★':'☆'}</button>`}
-    const ttl=view.name==='pf'?'내 포트폴리오':view.name==='cat'?catName(view.key):((LIST.find(x=>x.code===view.code)||{}).name||'');
+    const ttl=view.name==='pf'?'내 포트폴리오':view.name==='ev'?((EVD&&EVD.ev.find(e=>e.id===view.id))||{}).title||'일정':view.name==='cat'?catName(view.key):((LIST.find(x=>x.code===view.code)||{}).name||'');
     const shr=view.name==='pf'?'':`<button class="tb-fav" onclick="shareNow()" aria-label="공유">↗</button>`;
     h=`<div class="topbar"><button class="tb-back" onclick="back()" aria-label="뒤로">‹</button><b>${esc(ttl)}</b>${shr}${fav}</div>`+h;
   }
@@ -662,7 +718,7 @@ function status(){if(META&&LIVEP&&LIVEP.n){$('#status').textContent='🟢 실시
   const v=()=>'?t='+Math.floor(Date.now()/300000); // 5분 단위 캐시
   const get=async p=>{try{const r=await fetch('data/'+p+'.json'+v(),{cache:'no-cache'});return r.ok?await r.json():null}catch(e){return null}};
   async function load(){
-    const [m,w,mk]=await Promise.all([get('meta'),get('whale'),get('mkt')]);if(mk&&!(MKT&&MKT.live))MKT=mk;const ds=m?await Promise.all(Array.from({length:Math.ceil((m.n||0)/50)},(_,k)=>get('d'+k))):[];
+    const [m,w,mk,ev]=await Promise.all([get('meta'),get('whale'),get('mkt'),get('events')]);if(ev)EVD=ev;if(mk&&!(MKT&&MKT.live))MKT=mk;const ds=m?await Promise.all(Array.from({length:Math.ceil((m.n||0)/50)},(_,k)=>get('d'+k))):[];
     if(!m){if(!META)$('#status').textContent='데이터를 불러오지 못했어요. 잠시 후 다시 열어주세요';return}
     META=m;LIST=(META.list||[]).map(x=>({code:x.c,name:x.n,price:x.p,cap:x.cap,ch:x.ch,amt:x.amt,fb:x.fb,fbd:x.fbd,est:x.est,pct:x.pct,pr:x.pr,w:x.w,cat:catOf(x.n)}));
     if(w)WH=w;DET={};for(const d of ds)if(d&&d.items)Object.assign(DET,d.items);DATA={};
