@@ -429,7 +429,7 @@ function evView(id){
   const tbl=`<div class="evtw"><table class="evt"><tr><th>발표일</th>${cols.map(a=>`<th>${esc(a[1].replace('TIGER ','').replace('미국필라델피아반도체나스닥','필라반도체').replace('미국나스닥100','나스닥100 ETF').replace('필라델피아 ',''))}</th>`).join('')}</tr>${e.rows.map(r=>`<tr><td>${r.d.slice(2).replace(/-/g,'.')}</td>${cols.map(a=>{const v=r.r[a[0]];return `<td class="${cls(v)}">${v==null?'-':sign(v)}</td>`}).join('')}</tr>`).join('')}</table></div>`;
   return `<div class="evhero"><div class="evi2">${e.icon}</div><div class="evd">${dday(e.next)}</div><div class="evw">${kday(e.next)} 미국 장 마감 후 발표<br><b>한국시간 ${kday(addDay(e.next,1))} 새벽</b>에 결과가 나와요</div>
    <div class="evbig">과거 <b>${m.n}번</b> 중 다음 날 ${esc(e.assets[0][1])}<br><span class="up">${m.up}번 상승</span> · <span class="down">${m.n-m.up}번 하락</span></div>
-   <div class="evgauge"><i style="width:${pct}%"></i><span>상승 확률 ${pct}%</span></div></div>
+   <div class="evgauge"><i style="width:${pct}%"></i><span>과거 상승 비율 ${pct}%</span></div></div>
    <div class="note" style="margin-top:12px">${esc(e.desc)}</div>
    <div class="evgrid">${sc}</div>
    <div class="note">회차별 다음 날 등락 (미국은 발표일 종가 대비 다음 날 종가, 한국장은 발표 다음 날 아침 시작한 거래일 기준)</div>${tbl}
