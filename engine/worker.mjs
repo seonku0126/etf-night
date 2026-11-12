@@ -342,7 +342,7 @@ async function inav(env, code) {
   const V = ['main', 'ah', 'reg'];
   const mk = () => ({ W: 0, cw: 0, accP: 0, cwP: 0, acc: { main: 0, ah: 0, reg: 0 } });
   const B = { fx: mk(), kr: mk() };
-  let wCash = 0, lastTs = 0;
+  let wCash = 0, lastTs = 0, wPre = 0, wUsC = 0;
   const contrib = [];
   for (const r of rows) {
     if (r.kind === 'cash') { wCash += r.w; continue; }
@@ -352,8 +352,11 @@ async function inav(env, code) {
     if (!q || !ref || !q.last) continue;
     let rr;
     if (r.kind === 'fx' && r.reg === 'us' && closedUS) {
-      const reg = (q.reg || q.last) / ref - 1;
-      rr = { main: (1 + reg) * (1 + f) - 1, ah: q.last / ref - 1, reg };
+      const reg = (q.reg || q.last) / ref - 1, ah = q.last / ref - 1;
+      // 프리·애프터마켓 체결이 최근 1시간 안에 있으면 그 종목 가격을 그대로, 없으면 선물로 보정
+      const fresh = q.lastTs && q.lastTs > (q.regTs || 0) && Date.now() / 1000 - q.lastTs < 3600;
+      if (fresh) wPre += r.w; wUsC += r.w;
+      rr = { main: fresh ? ah : (1 + reg) * (1 + f) - 1, ah, reg };
     } else { const x = q.last / ref - 1; rr = { main: x, ah: x, reg: x }; }
     for (const v of V) b.acc[v] += r.w * rr[v];
     b.cw += r.w;
@@ -425,7 +428,13 @@ async function inav(env, code) {
   }
   const notes = [];
   if (indexMode) notes.push(`${proxy.sym} 지수 선물 × ${proxy.mult}배로 계산했어요(기준값 이후 선물 ${rIdx.main >= 0 ? '+' : ''}${(rIdx.main * 100).toFixed(2)}%)`);
-  else if (closedUS) notes.push(`미국 정규장이 닫혀 있어 ${futSym === 'NQ=F' ? '나스닥100' : futSym === 'ES=F' ? 'S&P500' : '다우'} 선물 움직임(${f >= 0 ? '+' : ''}${(f * 100).toFixed(2)}%)으로 보정했어요`);
+  else if (closedUS) {
+    const fn = futSym === 'NQ=F' ? '나스닥100' : futSym === 'ES=F' ? 'S&P500' : '다우', fp = `${f >= 0 ? '+' : ''}${(f * 100).toFixed(2)}%`;
+    const pr = wUsC ? Math.round((wPre / wUsC) * 100) : 0;
+    if (pr >= 95) notes.push(`미국 정규장이 닫혀 있어 종목별 프리·애프터마켓 가격으로 계산했어요`);
+    else if (pr > 0) notes.push(`종목별 프리·애프터마켓 가격을 반영했고(미국 종목 비중의 ${pr}%), 거래가 없는 종목은 ${fn} 선물(${fp})로 보정했어요`);
+    else notes.push(`미국 정규장이 닫혀 있어 ${fn} 선물 움직임(${fp})으로 보정했어요`);
+  }
   if (sess.futClosed) notes.push('지금은 선물도 쉬는 시간(미국 동부 금 17시~일 18시)이라 월요일 시가까지 더 움직일 수 있어요');
   if (nonUsW > 0.2) notes.push('미국 외 시장 비중이 커서 아직 정확하지 않아요');
 
