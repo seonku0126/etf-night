@@ -226,6 +226,19 @@ button:active,.cat:active,.seg button:active{transform:scale(.94)}
 .li:active,.card:active,.results div:active{transform:scale(.985);background:#1f232b}
 .tabs button:active{transform:scale(.92)}
 .cat:hover,.li:hover{background:#1c2029}
+
+/* ---- 반짝이는 글씨 ---- */
+h1{background:linear-gradient(90deg,#fff 0%,#fff 35%,#ffe9a8 45%,#fff 55%,#fff 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:tshine 4.5s linear infinite}
+h1 span{background:linear-gradient(90deg,#f5c542,#ffde7a,#ff9f43,#f5c542);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:tshine 3s linear infinite;filter:drop-shadow(0 0 8px rgba(245,197,66,.55))}
+@keyframes tshine{to{background-position:-250% 0}}
+.li .np.up,.nb b.up,.mcard .mp,.hero .up,.big.up{text-shadow:0 0 10px rgba(255,90,95,.55),0 0 22px rgba(255,90,95,.25)}
+.li .np.down,.nb b.down,.hero .down,.big.down{text-shadow:0 0 10px rgba(78,140,255,.6),0 0 22px rgba(78,140,255,.28)}
+.li .np.up,.li .np.down,.nb b,.mcard .mp,.hero .up,.hero .down{animation:glow 2.6s ease-in-out infinite}
+@keyframes glow{50%{filter:brightness(1.25) saturate(1.2)}}
+.ht{position:relative;overflow:hidden}.ht:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.22) 50%,transparent 65%);background-size:250% 100%;animation:mshine 3.5s linear infinite}
+.ht b,.mt b{text-shadow:0 0 8px rgba(255,255,255,.25)}
+#status{font-weight:700;color:#2ee59d;text-shadow:0 0 8px rgba(46,229,157,.6);animation:glow 2s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
 <body>
