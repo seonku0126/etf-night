@@ -31,5 +31,16 @@ for (let k = 0; k * CH < codes.length; k++) {
   const items = {}; for (const c of codes.slice(k * CH, (k + 1) * CH)) items[c] = compact(res[c]);
   fs.writeFileSync(`${OUT}/d${k}.json`, JSON.stringify({ at, items })); files.push(`${OUT}/d${k}.json`);
 }
+// 실시간 계산용: ETF별 계산식 재료 + 필요한 미국 종목 목록(비중 큰 순)
+const L = {}, symW = {};
+for (const c of codes) { const j = res[c]; if (!j || j.error || !j.live) continue; L[c] = j.live;
+  const add = (s, w) => { if (s) symW[s] = (symW[s] || 0) + w; };
+  for (const [s, w] of j.live.u || []) add(s, w);
+  if (j.live.s) add(j.live.s, 1e4); if (j.live.ri) add(j.live.ri.s, 1e4); if (j.live.fs) add(j.live.fs, 1e4); }
+symW['KRW=X'] = 1e9;
+const syms = Object.keys(symW).sort((a, b) => symW[b] - symW[a]);
+fs.writeFileSync(OUT + '/live.json', JSON.stringify({ at, e: L }));
+fs.writeFileSync(OUT + '/syms.json', JSON.stringify(syms));
+console.log(JSON.stringify({ liveEtf: Object.keys(L).length, syms: syms.length }));
 const ok = Object.values(res).filter((j) => !j.error).length;
 console.log(JSON.stringify({ at, computed: top.length, ok, files: files.map((f) => [f, fs.statSync(f).size]) }));

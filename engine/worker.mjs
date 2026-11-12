@@ -342,7 +342,8 @@ async function inav(env, code) {
   const V = ['main', 'ah', 'reg'];
   const mk = () => ({ W: 0, cw: 0, accP: 0, cwP: 0, acc: { main: 0, ah: 0, reg: 0 } });
   const B = { fx: mk(), kr: mk() };
-  let wCash = 0, lastTs = 0, wPre = 0, wUsC = 0;
+  let wCash = 0, lastTs = 0, wPre = 0, wUsC = 0, fixFx = 0;
+  const uList = [];
   const contrib = [];
   for (const r of rows) {
     if (r.kind === 'cash') { wCash += r.w; continue; }
@@ -359,6 +360,7 @@ async function inav(env, code) {
       rr = { main: fresh ? ah : (1 + reg) * (1 + f) - 1, ah, reg };
     } else { const x = q.last / ref - 1; rr = { main: x, ah: x, reg: x }; }
     for (const v of V) b.acc[v] += r.w * rr[v];
+    if (r.kind === 'fx') { if (r.reg === 'us') uList.push([r.sym, +r.w.toFixed(4), +ref.toPrecision(7)]); else fixFx += r.w * rr.main; }
     b.cw += r.w;
     if (r.kind === 'fx') lastTs = Math.max(lastTs, q.lastTs || 0);
     contrib.push({ t: r.t, n: r.n.split('/')[0], w: +r.w.toFixed(2), r: +(rr.main * 100).toFixed(2), c: +(r.w * rr.main).toFixed(3) });
@@ -372,7 +374,7 @@ async function inav(env, code) {
   // 지수
   const pq = proxy && Q[proxy.sym];
   const pRef = pq && refClose(pq, navDate), pRef2 = pq && prevKrDate && refClose(pq, prevKrDate);
-  let rIdx = null;
+  let rIdx = null, idxBase = pRef;
   if (pq && pRef && pq.last) {
     if (/=F$/.test(proxy.sym)) {
       // 장 마감 뒤 기준값(마감 iNAV)은 15:30 선물 가격을 이미 반영 → 기준점을 그때 선물 가격으로
@@ -384,6 +386,7 @@ async function inav(env, code) {
       }
       const atAnchor = closedUS && futAt && proxy.sym === futSym ? futAt : pq.last;
       const now = futPts && futPts.length && proxy.sym === futSym ? futPts[futPts.length - 1][1] : pq.last;
+      idxBase = base;
       rIdx = { main: now / base - 1, ah: now / base - 1, reg: (base === pRef ? atAnchor : now) / base - 1 };
     } else {
       const reg = (pq.reg || pq.last) / pRef - 1;
@@ -398,7 +401,7 @@ async function inav(env, code) {
   const fxRatio = hedged || !fxNow || !fxBase ? 1 : fxNow / fxBase;
   const fxRatioPrev = hedged || !fxBase || !fxOf(prevKrDate) ? 1 : fxBase / fxOf(prevKrDate);
 
-  let method, estFn, rUsdPrev = null;
+  let method, estFn, rUsdPrev = null, live = null;
   const R = {};
   const indexMode = proxy && rIdx && (proxy.mult !== 1 || ((F.W === 0 || coverage < 0.5) && K.cw <= K.W * 0.5));
   const rK = K.W ? K.acc.main / K.W : 0, rKPrev = K.W && K.cwP ? K.accP / K.W : 0;
@@ -407,6 +410,7 @@ async function inav(env, code) {
     for (const v of V) R[v] = rIdx[v];
     if (rIdxPrev != null) rUsdPrev = rIdxPrev;
     method = `지수 기반 (${proxy.sym} × ${proxy.mult})`;
+    live = { m: 'i', s: proxy.sym, x: proxy.mult, b: +idxBase.toPrecision(7) };
     lastTs = Math.max(lastTs, pq.lastTs || 0);
   } else if (F.cw > 0 || K.W > 0) {
     const useIdx = proxy && proxy.mult === 1 && rIdx && coverage < 0.8;
@@ -415,6 +419,7 @@ async function inav(env, code) {
     if (F.W === 0 || F.cwP > 0) rUsdPrev = F.W ? (useIdx && rIdxPrev != null ? (F.accP + (F.W - F.cwP) * rIdxPrev) / F.W : F.accP / F.cwP) : 0;
     const wc = wCash / totW, wk = K.W / totW, wf = F.W / totW;
     estFn = (base, r, fr, rk) => base * (wc + wk * (1 + (rk || 0)) + wf * (1 + r) * fr);
+    live = { m: 'h', wc: +wc.toFixed(5), wk: +wk.toFixed(5), wf: +wf.toFixed(5), rk: +rK.toFixed(5), d: F.W ? +(useIdx ? F.W : F.cw || 1).toFixed(4) : 0, fix: +fixFx.toFixed(5), u: uList, ri: useIdx ? { s: proxy.sym, w: +restW.toFixed(4), b: +pRef.toPrecision(7) } : null };
     method = (useIdx ? `구성종목 가중 + 나머지 ${proxy.sym}` : '구성종목 가중') + (K.W > 0 ? ' · 국내주식 포함' : '');
   } else throw new Error('구성종목 시세를 받지 못했습니다');
   if (/커버드콜/.test(meta.name)) method += ' · 커버드콜 상승 제한 미반영';
@@ -451,6 +456,7 @@ async function inav(env, code) {
     warn: nonUsW > 0.2 ? '미국 외 시장 비중이 커서 아직 정확하지 않아요' : null, nonUs: +(nonUsW * 100).toFixed(1), notes,
     pricedAt: lastTs ? new Date(lastTs * 1000).toISOString() : null, at: new Date().toISOString(),
     top: contrib.slice(0, 8), pdfDate: h.pdfDate, inavLive: h.inavLive || null,
+    live: live && { ...live, nav, fb: hedged ? 0 : fxBase || 0, fs: futSym, fa: futAt || null },
   };
 }
 

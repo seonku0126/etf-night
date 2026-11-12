@@ -330,7 +330,7 @@ function mktDash(){
   const big=['NVDA','AAPL','MSFT','AMZN','GOOGL','META','TSLA','AVGO','AMD','TSM','MU','PLTR'].filter(k=>Q[k]);
   const heat=big.map((k,i)=>{const v=Q[k].pc||0,a=Math.min(1,Math.abs(v)/5)*.75+.15;const bg=v>0.005?`rgba(255,90,95,${a})`:v<-0.005?`rgba(78,140,255,${a})`:'rgba(255,255,255,.08)';return `<div class="ht" style="background:${bg};animation-delay:${i*30}ms"><span>${esc(Q[k].n)}</span><b>${mpct(v)}</b></div>`}).join('');
   const bs=big.length?mses(Q[big[0]]):'';
-  return `<div class="mkt"><div class="mh"><b>🌍 지금 글로벌 시장</b><span>${MKT.live?`<i class="live"></i>실시간 · ${at}`:`${at} 기준`}</span></div>
+  return `<div class="mkt${NOANIM?' noanim':''}"><div class="mh"><b>🌍 지금 글로벌 시장</b><span>${MKT.live?`<i class="live"></i>실시간 · ${at}`:`${at} 기준`}</span></div>
   <div class="mhero">${hero('NQ=F')}${hero('ES=F')}</div>
   <div class="mgrid">${['^SOX','KRW=X','^VIX','^TNX','GC=F','CL=F','BTC-USD','YM=F'].map(tile).join('')}</div>
   ${heat?`<div class="msub">빅테크 ${bs==='프리'?'프리마켓':bs==='애프터'?'애프터마켓':bs==='마감'?'(전일 마감)':'실시간'}<span>전일 종가 대비</span></div><div class="heat">${heat}</div>`:''}</div>`;
@@ -339,6 +339,36 @@ function mktDash(){
 const LIVE='https://etf-night-mkt.seonku0126.workers.dev/mkt';
 async function liveMkt(){if(document.hidden)return;try{const r=await fetch(LIVE,{cache:'no-store'});if(!r.ok)return;const d=await r.json();if(!d||!d.q||!Object.keys(d.q).length)return;MKT=d;const el=document.querySelector('.mkt');if(el){const t=document.createElement('div');t.innerHTML=mktDash();const n=t.firstElementChild;if(n){n.classList.add('noanim');el.replaceWith(n)}}else if(view.name==='rank'&&!pfForm)render()}catch(e){}}
 setInterval(liveMkt,30000);document.addEventListener('visibilitychange',liveMkt);
+
+// ---------- 밤 추정 실시간 계산 (Cloudflare가 미국 현재가 전달 → 여기서 계산) ----------
+const PXURL='https://etf-night-mkt.seonku0126.workers.dev/px';
+let LIVEE=null,LIVEP=null,NOANIM=false;
+function calcLive(e,P){
+  const Q=P.q,open=P.open,now=Date.now()/1000;
+  const fr=e.fb&&Q['KRW=X']?Q['KRW=X'][0]/e.fb:1;
+  const f=!open&&e.fs&&e.fa&&Q[e.fs]?Q[e.fs][0]/e.fa-1:0;
+  const rOf=(s,ref)=>{const q=Q[s];if(!q||!ref)return null;if(/=F$/.test(s)||open)return q[0]/ref-1;if(q[1]>q[3]&&now-q[1]<3600)return q[0]/ref-1;return ((q[2]??q[0])/ref)*(1+f)-1};
+  if(e.m==='i'){const r=rOf(e.s,e.b);return r==null?null:e.nav*(1+e.x*((1+r)*fr-1))}
+  let acc=e.fix||0;for(const [s,w,ref] of e.u||[]){const r=rOf(s,ref);acc+=w*(r==null?f:r)}
+  if(e.ri){const r=rOf(e.ri.s,e.ri.b);acc+=e.ri.w*(r==null?f:r)}
+  const R=e.d?acc/e.d:0;return e.nav*(e.wc+e.wk*(1+e.rk)+e.wf*(1+R)*fr);
+}
+function applyLive(){
+  if(!LIVEE||!LIVEP||!LIVEP.n)return false;
+  for(const x of LIST){const e=LIVEE.e[x.code];if(!e)continue;const v=calcLive(e,LIVEP);if(v==null||!isFinite(v))continue;
+    const pct=+((v/e.nav-1)*100).toFixed(2);x.est=Math.round(v*10)/10;x.pct=pct;
+    const d=DET[x.code];if(d){d.est=x.est;d.pct=pct;d.pricedAt=LIVEP.at;if(d.price)d.vsPrice=+((v/d.price-1)*100).toFixed(2)}}
+  DATA={};return true;
+}
+async function livePx(){
+  if(document.hidden||!META)return;
+  try{
+    if(!LIVEE||Date.now()-LIVEE._t>600000){const r=await fetch('data/live.json?t='+Math.floor(Date.now()/300000),{cache:'no-cache'});if(r.ok){LIVEE=await r.json();LIVEE._t=Date.now()}}
+    const r=await fetch(PXURL,{cache:'no-store'});if(!r.ok)return;LIVEP=await r.json();
+    if(applyLive()){NOANIM=true;status();if(!pfForm&&!document.activeElement?.matches?.('input'))render()}
+  }catch(e){}
+}
+setInterval(livePx,60000);document.addEventListener('visibilitychange',livePx);
 function nightBanner(){
   const g=k=>{const a=LIST.filter(x=>x.cat===k&&x.pct!=null&&!x.w&&!/레버리지|인버스|\(H\)/.test(x.name));return a.length?a.reduce((s,x)=>s+x.pct,0)/a.length:null};
   const all=LIST.filter(x=>x.pct!=null&&!x.w&&!/레버리지|인버스/.test(x.name));
@@ -613,7 +643,7 @@ $('#q').addEventListener('input',e=>{
 });
 function pick(code){$('#q').value='';$('#res').style.display='none';openD(code)}
 document.addEventListener('click',e=>{if(!e.target.closest('.search'))$('#res').style.display='none'});
-function status(){if(META){const d=new Date(META.at);$('#status').textContent='밤 추정 '+d.toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false})+' 계산 · 08:40·17:58·19:58·21:30·22:35·23:28 자동 갱신'}}
+function status(){if(META&&LIVEP&&LIVEP.n){$('#status').textContent='밤 추정 실시간 계산 중 · '+new Date(LIVEP.at).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false})+' 미국 시세 반영 (1분마다)';return}if(META){const d=new Date(META.at);$('#status').textContent='밤 추정 '+d.toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false})+' 계산 · 08:40·17:58·19:58·21:30·22:35·23:28 자동 갱신'}}
 (async()=>{
   render();
   const v=()=>'?t='+Math.floor(Date.now()/300000); // 5분 단위 캐시
@@ -623,9 +653,9 @@ function status(){if(META){const d=new Date(META.at);$('#status').textContent='�
     if(!m){if(!META)$('#status').textContent='데이터를 불러오지 못했어요. 잠시 후 다시 열어주세요';return}
     META=m;LIST=(META.list||[]).map(x=>({code:x.c,name:x.n,price:x.p,cap:x.cap,ch:x.ch,amt:x.amt,fb:x.fb,fbd:x.fbd,est:x.est,pct:x.pct,pr:x.pr,w:x.w,cat:catOf(x.n)}));
     if(w)WH=w;DET={};for(const d of ds)if(d&&d.items)Object.assign(DET,d.items);DATA={};
-    applyWH();status();if(!pfForm)render();
+    applyWH();applyLive();status();if(!pfForm)render();
   }
-  await load();liveMkt();
+  await load();liveMkt();livePx();
   if(/[?&]me(=|&|$)/.test(location.search)){store.set('me',1);toast('이 브라우저는 방문자 수에서 빠졌어요');history.replaceState(null,'',location.pathname);render()}
   const BOT=/bot|crawl|spider|slurp|Yeti|Daum|Headless|Lighthouse|preview|facebookexternalhit|kakaotalk-scrap/i.test(navigator.userAgent);
   if(!store.get('me',0)&&!navigator.webdriver&&!BOT)try{const d=new Date(Date.now()+9*3600e3).toISOString().slice(0,10).replace(/-/g,''),H='https://abacus.jasoncameron.dev/hit/daynnightetf/';

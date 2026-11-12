@@ -34,19 +34,45 @@ async function build() {
   }
   return { at: new Date().toISOString(), live: 1, q };
 }
+// /px: 밤 추정 iNAV 실시간 계산용 미국 종목 현재가 (목록은 사이트의 syms.json, 45초 캐시)
+async function px() {
+  let syms = [];
+  try { const r = await fetch('https://daynnightetf.com/data/syms.json', { cf: { cacheTtl: 600, cacheEverything: true } }); if (r.ok) syms = await r.json(); } catch (e) {}
+  syms = syms.slice(0, 900);
+  const bs = []; for (let i = 0; i < syms.length; i += 20) bs.push(syms.slice(i, i + 20));
+  const q = {}; let open = null;
+  await Promise.all(bs.map(async (b) => {
+    const url = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(b.join(','))}&range=1d&interval=30m&includePrePost=true`;
+    try {
+      const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/130 Safari/537.36' } });
+      if (!r.ok) return;
+      for (const x of ((await r.json()).spark || {}).result || []) {
+        const R = x.response && x.response[0]; if (!R || !R.timestamp) continue;
+        const m = R.meta || {}, cl = R.indicators.quote[0].close;
+        let i = cl.length - 1; while (i >= 0 && cl[i] == null) i--;
+        if (i < 0) continue;
+        q[x.symbol] = [+cl[i].toPrecision(7), R.timestamp[i], m.regularMarketPrice != null ? +m.regularMarketPrice.toPrecision(7) : null, m.regularMarketTime || 0];
+        const per = (m.currentTradingPeriod || {}).regular;
+        if (open === null && per && !/[=^]|-USD|\./.test(x.symbol)) { const n = Date.now() / 1000; open = n >= per.start && n < per.end; }
+      }
+    } catch (e) {}
+  }));
+  return { at: new Date().toISOString(), open: !!open, n: Object.keys(q).length, q };
+}
 export default {
   async fetch(req, env, ctx) {
     const o = req.headers.get('Origin') || '';
     const cors = { 'Access-Control-Allow-Origin': ORIGINS.includes(o) ? o : ORIGINS[0], Vary: 'Origin' };
     if (req.method === 'OPTIONS') return new Response(null, { headers: { ...cors, 'Access-Control-Allow-Methods': 'GET' } });
     const url = new URL(req.url);
-    if (url.pathname !== '/mkt') return new Response('ok', { headers: cors });
-    const cache = caches.default, key = new Request('https://cache.local/mkt');
+    if (url.pathname !== '/mkt' && url.pathname !== '/px') return new Response('ok', { headers: cors });
+    const isPx = url.pathname === '/px';
+    const cache = caches.default, key = new Request('https://cache.local' + url.pathname);
     let res = await cache.match(key);
     if (!res) {
-      const d = await build();
+      const d = isPx ? await px() : await build();
       if (!Object.keys(d.q).length) return new Response(JSON.stringify({ error: 'upstream' }), { status: 502, headers: { ...cors, 'Content-Type': 'application/json' } });
-      res = new Response(JSON.stringify(d), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=30' } });
+      res = new Response(JSON.stringify(d), { headers: { 'Content-Type': 'application/json', 'Cache-Control': `public, max-age=${isPx ? 45 : 30}` } });
       ctx.waitUntil(cache.put(key, res.clone()));
     }
     const out = new Response(res.body, res);
