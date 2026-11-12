@@ -1,4 +1,4 @@
-// 데이앤나잇 홈 대시보드 실시간 시세 중계 (Yahoo spark → 30초 캐시)
+// 데이앤나잇 홈 대시보드 실시간 시세 중계 (Yahoo spark → 5분 캐시)
 const SYMS = {
   'NQ=F': '나스닥100 선물', 'ES=F': 'S&P500 선물', 'YM=F': '다우 선물', '^SOX': '필라델피아 반도체',
   'KRW=X': '원/달러', '^VIX': 'VIX 공포지수', '^TNX': '미 10년물 금리', 'GC=F': '금', 'CL=F': 'WTI 원유', 'BTC-USD': '비트코인',
@@ -34,7 +34,7 @@ async function build() {
   }
   return { at: new Date().toISOString(), live: 1, q };
 }
-// /px: 밤 추정 iNAV 실시간 계산용 미국 종목 현재가 (목록은 사이트의 syms.json, 45초 캐시)
+// /px: 밤 추정 iNAV 실시간 계산용 미국 종목 현재가 (목록은 사이트의 syms.json, 5분 캐시)
 async function px() {
   let syms = [];
   try { const r = await fetch('https://daynnightetf.com/data/syms.json', { cf: { cacheTtl: 600, cacheEverything: true } }); if (r.ok) syms = await r.json(); } catch (e) {}
@@ -74,7 +74,7 @@ export default {
     if (!res) {
       const d = isPx ? await px() : await build();
       if (!Object.keys(d.q).length) return new Response(JSON.stringify({ error: 'upstream' }), { status: 502, headers: { ...cors, 'Content-Type': 'application/json' } });
-      res = new Response(JSON.stringify(d), { headers: { 'Content-Type': 'application/json', 'Cache-Control': `public, max-age=${isPx ? 45 : 30}` } });
+      res = new Response(JSON.stringify(d), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300' } });
       ctx.waitUntil(cache.put(key, res.clone()));
     }
     const out = new Response(res.body, res);

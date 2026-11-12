@@ -330,7 +330,7 @@ function mktDash(){
   const big=['NVDA','AAPL','MSFT','AMZN','GOOGL','META','TSLA','AVGO','AMD','TSM','MU','PLTR'].filter(k=>Q[k]);
   const heat=big.map((k,i)=>{const v=Q[k].pc||0,a=Math.min(1,Math.abs(v)/5)*.75+.15;const bg=v>0.005?`rgba(255,90,95,${a})`:v<-0.005?`rgba(78,140,255,${a})`:'rgba(255,255,255,.08)';return `<div class="ht" style="background:${bg};animation-delay:${i*30}ms"><span>${esc(Q[k].n)}</span><b>${mpct(v)}</b></div>`}).join('');
   const bs=big.length?mses(Q[big[0]]):'';
-  return `<div class="mkt${NOANIM?' noanim':''}"><div class="mh"><b>🌍 지금 글로벌 시장</b><span>${MKT.live?`<i class="live"></i>실시간 · ${at}`:`${at} 기준`}</span></div>
+  return `<div class="mkt${NOANIM?' noanim':''}"><div class="mh"><b>🌍 지금 글로벌 시장</b><span>${MKT.live?`<i class="live"></i>실시간`:`${at} 기준`}</span></div>
   <div class="mhero">${hero('NQ=F')}${hero('ES=F')}</div>
   <div class="mgrid">${['^SOX','KRW=X','^VIX','^TNX','GC=F','CL=F','BTC-USD','YM=F'].map(tile).join('')}</div>
   ${heat?`<div class="msub">빅테크 ${bs==='프리'?'프리마켓':bs==='애프터'?'애프터마켓':bs==='마감'?'(전일 마감)':'실시간'}<span>전일 종가 대비</span></div><div class="heat">${heat}</div>`:''}</div>`;
@@ -338,7 +338,7 @@ function mktDash(){
 
 const LIVE='https://etf-night-mkt.seonku0126.workers.dev/mkt';
 async function liveMkt(){if(document.hidden)return;try{const r=await fetch(LIVE,{cache:'no-store'});if(!r.ok)return;const d=await r.json();if(!d||!d.q||!Object.keys(d.q).length)return;MKT=d;const el=document.querySelector('.mkt');if(el){const t=document.createElement('div');t.innerHTML=mktDash();const n=t.firstElementChild;if(n){n.classList.add('noanim');el.replaceWith(n)}}else if(view.name==='rank'&&!pfForm)render()}catch(e){}}
-setInterval(liveMkt,30000);document.addEventListener('visibilitychange',liveMkt);
+setInterval(liveMkt,60000);document.addEventListener('visibilitychange',liveMkt);
 
 // ---------- 밤 추정 실시간 계산 (Cloudflare가 미국 현재가 전달 → 여기서 계산) ----------
 const PXURL='https://etf-night-mkt.seonku0126.workers.dev/px';
@@ -643,7 +643,7 @@ $('#q').addEventListener('input',e=>{
 });
 function pick(code){$('#q').value='';$('#res').style.display='none';openD(code)}
 document.addEventListener('click',e=>{if(!e.target.closest('.search'))$('#res').style.display='none'});
-function status(){if(META&&LIVEP&&LIVEP.n){$('#status').textContent='밤 추정 실시간 계산 중 · '+new Date(LIVEP.at).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false})+' 미국 시세 반영 (1분마다)';return}if(META){const d=new Date(META.at);$('#status').textContent='밤 추정 '+d.toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false})+' 계산 · 08:40·17:58·19:58·21:30·22:35·23:28 자동 갱신'}}
+function status(){if(META&&LIVEP&&LIVEP.n){$('#status').textContent='🟢 실시간';return}if(META){$('#status').textContent='🟢 실시간'}}
 (async()=>{
   render();
   const v=()=>'?t='+Math.floor(Date.now()/300000); // 5분 단위 캐시
