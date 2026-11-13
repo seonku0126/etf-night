@@ -228,6 +228,7 @@ button:active,.cat:active,.seg button:active{transform:scale(.94)}
 .cat:hover,.li:hover{background:#1c2029}
 
 
+.evstrip{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:linear-gradient(120deg,#22283a,#171b25);border:1px solid #333b52;border-radius:16px;padding:11px 14px;margin-bottom:12px;color:var(--ink);font:inherit}.evstrip>div{flex:1}.evstrip b{display:block;font-size:14.5px}.evstrip em{font-style:normal;color:var(--acc);text-shadow:0 0 8px rgba(245,197,66,.6);margin-left:4px}.evstrip span{font-size:12.5px;color:#c9ced8}.evstrip i{font-style:normal}.evstrip .go{font-size:22px;color:var(--acc)}
 .evc{display:block;width:100%;text-align:left;background:linear-gradient(150deg,#1c2232,#151922);border:1px solid #2b3245;border-radius:18px;padding:14px;margin-bottom:10px;color:var(--ink);font:inherit}
 .evh{display:flex;align-items:center;gap:10px}.evh>div{flex:1}.evh b{display:block;font-size:17px}.evh span{font-size:12px;color:var(--mute)}
 .evi{font-size:28px}.evh em{font-style:normal;font-weight:900;font-size:16px;color:var(--acc);text-shadow:0 0 10px rgba(245,197,66,.6);animation:glow 2s infinite}
@@ -414,12 +415,15 @@ const dday=d=>{const n=Math.round((Date.parse(d)-Date.parse(kstToday()))/864e5);
 const kday=d=>{const t=new Date(d+'T12:00:00Z');return `${t.getUTCMonth()+1}월 ${t.getUTCDate()}일(${'일월화수목금토'[t.getUTCDay()]})`};
 const addDay=(d,n)=>new Date(Date.parse(d+'T12:00:00Z')+n*864e5).toISOString().slice(0,10);
 function openEv(id){push({name:'ev',id,tab:'events'})}
+
+function evStrip(){if(!EVD||!EVD.ev)return'';const e=EVD.ev.filter(x=>x.next).sort((a,b)=>a.next<b.next?-1:1)[0];if(!e)return'';const k=e.assets[0][0],t=e.stats[k];if(!t)return'';
+  return `<button class="evstrip" onclick="go('events');openEv('${e.id}')"><span class="evi">${e.icon}</span><div><b>${esc(e.title)} <em>${dday(e.next)}</em></b><span>과거 ${t.n}번 중 ${esc(e.lab)} ${esc(e.assets[0][1])} <i class="up">${t.up}번 상승</i></span></div><i class="go">›</i></button>`}
 function eventsView(){
   if(!EVD||!EVD.ev.length)return '<div class="empty">일정을 불러오는 중이에요</div>';
-  const xs=EVD.ev.slice().sort((a,b)=>a.next<b.next?-1:1);
+  const xs=EVD.ev.slice().sort((a,b)=>(a.next||'9')<(b.next||'9')?-1:1);
   return `<div class="note">다가오는 일정과, 과거 같은 일이 있었던 다음 날 시장이 어떻게 움직였는지 보여줘요</div>`+xs.map(e=>{const k=e.assets[0][0],st=e.stats[k]||{},st2=e.stats['^NDX'];return `<button class="evc" onclick="openEv('${e.id}')">
-    <div class="evh"><span class="evi">${e.icon}</span><div><b>${esc(e.title)}</b><span>${kday(e.next)} · ${esc(e.when.split('→')[0].trim())}</span></div><em>${dday(e.next)}</em></div>
-    <div class="evs"><div><span>다음 날 ${esc(e.assets[0][1])}</span><b>${st.n}번 중 <i class="up">${st.up}번 상승</i></b></div>${st2?`<div><span>다음 날 나스닥100</span><b>${st2.n}번 중 <i class="up">${st2.up}번 상승</i></b></div>`:''}</div>
+    <div class="evh"><span class="evi">${e.icon}</span><div><b>${esc(e.title)}</b><span>${e.next?kday(e.next)+' · '+esc(e.when):'다음 일정 발표 전'}</span></div><em>${e.next?dday(e.next):''}</em></div>
+    <div class="evs"><div><span>${esc(e.lab)} ${esc(e.assets[0][1])}</span><b>${st.n}번 중 <i class="up">${st.up}번 상승</i></b></div>${st2&&k!=='^NDX'?`<div><span>${esc(e.lab)} 나스닥100</span><b>${st2.n}번 중 <i class="up">${st2.up}번 상승</i></b></div>`:''}</div>
     <div class="evgo">과거 기록 전부 보기 ›</div></button>`}).join('')+`<div class="note" style="margin-top:6px">과거 통계일 뿐 앞으로도 같다는 보장은 없어요. 투자 권유가 아닙니다.</div>`;
 }
 function evView(id){
@@ -428,12 +432,12 @@ function evView(id){
   const sc=e.assets.filter(a=>e.stats[a[0]]).map(([s,n,mk])=>{const t=e.stats[s];return `<div class="evst"><div class="evn">${esc(n)}${mk==='kr'?' <small>한국장</small>':''}</div><div class="evb"><b>${t.up}<small>/${t.n}번 상승</small></b><span class="${cls(t.avg)}">평균 ${sign(t.avg)}</span></div><div class="evbar"><i style="width:${Math.round(t.up/t.n*100)}%"></i></div><div class="evm">평균 움직임 ±${t.abs.toFixed(1)}% · 최고 <span class="up">${sign(t.max)}</span> · 최저 <span class="down">${sign(t.min)}</span></div><div class="evl">최근 4번 ${t.last4.map(v=>`<i class="${cls(v)}">${sign(v)}</i>`).join('')}</div></div>`}).join('');
   const cols=e.assets.filter(a=>e.stats[a[0]]);
   const tbl=`<div class="evtw"><table class="evt"><tr><th>발표일</th>${cols.map(a=>`<th>${esc(a[1].replace('TIGER ','').replace('미국필라델피아반도체나스닥','필라반도체').replace('미국나스닥100','나스닥100 ETF').replace('필라델피아 ',''))}</th>`).join('')}</tr>${e.rows.map(r=>`<tr><td>${r.d.slice(2).replace(/-/g,'.')}</td>${cols.map(a=>{const v=r.r[a[0]];return `<td class="${cls(v)}">${v==null?'-':sign(v)}</td>`}).join('')}</tr>`).join('')}</table></div>`;
-  return `<div class="evhero"><div class="evi2">${e.icon}</div><div class="evd">${dday(e.next)}</div><div class="evw">${kday(e.next)} 미국 장 마감 후 발표<br><b>한국시간 ${kday(addDay(e.next,1))} 새벽</b>에 결과가 나와요</div>
-   <div class="evbig">과거 <b>${m.n}번</b> 중 다음 날 ${esc(e.assets[0][1])}<br><span class="up">${m.up}번 상승</span> · <span class="down">${m.n-m.up}번 하락</span></div>
+  return `<div class="evhero"><div class="evi2">${e.icon}</div><div class="evd">${e.next?dday(e.next):'다음 일정 발표 전'}</div>${e.next?`<div class="evw">${kday(e.next)} ${esc(e.when)}<br><b>${esc(e.kst.replace('다음 날',kday(addDay(e.next,1))))}</b>에 결과가 나와요</div>`:''}
+   <div class="evbig">과거 <b>${m.n}번</b> 중 ${esc(e.lab)} ${esc(e.assets[0][1])}<br><span class="up">${m.up}번 상승</span> · <span class="down">${m.n-m.up}번 하락</span></div>
    <div class="evgauge"><i style="width:${pct}%"></i><span>과거 상승 비율 ${pct}%</span></div></div>
    <div class="note" style="margin-top:12px">${esc(e.desc)}</div>
    <div class="evgrid">${sc}</div>
-   <div class="note">회차별 다음 날 등락 (미국은 발표일 종가 대비 다음 날 종가, 한국장은 발표 다음 날 아침 시작한 거래일 기준)</div>${tbl}
+   <div class="note">회차별 등락 (미국은 ${e.lab==='발표 당일'?'발표 당일 전일 종가 대비':'발표일 종가 대비 다음 날 종가'}, 한국장은 발표 다음 날 아침 시작한 거래일 기준)</div>${tbl}
    <div class="disc">과거 ${m.n}번의 통계일 뿐 앞으로도 같다는 보장은 없어요. 투자 권유가 아닙니다. 한국 ETF는 상장 이후 기록만 있어요.</div>
    <button class="sharebtn" onclick="shareNow()" style="margin-top:12px">↗ 친구에게 공유하기</button>`;
 }
@@ -551,7 +555,7 @@ function rankView(){
   const fbd=(LIST.find(x=>x.fbd)||{}).fbd;
   const note={nightUp:'한국 장 마감 뒤 지금까지 오른 순 (마감 iNAV 대비)',nightDown:'한국 장 마감 뒤 지금까지 내린 순 (마감 iNAV 대비)',amt:'오늘 한국 장 거래대금',fbuy:`외국인 순매수 금액 (${fbd?fbd.slice(4,6)+'/'+fbd.slice(6):''} 기준)`,fsell:`외국인 순매도 금액 (${fbd?fbd.slice(4,6)+'/'+fbd.slice(6):''} 기준)`,todayUp:'오늘 한국 장 등락률',todayDown:'오늘 한국 장 등락률'}[k];
   const seg=RANKS.map(r=>`<button class="${rankKey===r[0]?'on':''}" onclick="rankKey='${r[0]}';render()">${r[1]}</button>`).join('');
-  return `${mktDash()}${nightBanner()}${homeAd()}<div class="seg">${seg}</div><div class="note">${note} · 상위 ${xs.length}개</div><div class="list">${xs.map((x,i)=>li(x,i,right(x))).join('')||'<div class="empty">데이터가 없어요</div>'}</div>${adSlot()}`;
+  return `${mktDash()}${nightBanner()}${evStrip()}${homeAd()}<div class="seg">${seg}</div><div class="note">${note} · 상위 ${xs.length}개</div><div class="list">${xs.map((x,i)=>li(x,i,right(x))).join('')||'<div class="empty">데이터가 없어요</div>'}</div>${adSlot()}`;
 }
 function card(code){
   const d=DATA[code],m=LIST.find(x=>x.code===code)||{};
@@ -726,6 +730,7 @@ function status(){if(META&&LIVEP&&LIVEP.n){$('#status').textContent='🟢 실시
     applyWH();applyLive();status();if(!pfForm)render();
   }
   await load();liveMkt();livePx();
+  try{const q=new URLSearchParams(location.search).get('ev');if(q&&EVD&&EVD.ev.some(e=>e.id===q)){go('events');openEv(q)}}catch(e){}
   if(/[?&]me(=|&|$)/.test(location.search)){store.set('me',1);toast('이 브라우저는 방문자 수에서 빠졌어요');history.replaceState(null,'',location.pathname);render()}
   const BOT=/bot|crawl|spider|slurp|Yeti|Daum|Headless|Lighthouse|preview|facebookexternalhit|kakaotalk-scrap/i.test(navigator.userAgent);
   if(!store.get('me',0)&&!navigator.webdriver&&!BOT)try{const d=new Date(Date.now()+9*3600e3).toISOString().slice(0,10).replace(/-/g,''),H='https://abacus.jasoncameron.dev/hit/daynnightetf/';

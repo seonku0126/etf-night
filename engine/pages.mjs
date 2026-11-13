@@ -194,6 +194,37 @@ ${avg!=null?`<div class="card" style="text-align:center"><div class="sub">🌙 �
   fs.writeFileSync(path.join(siteDir, 'night', 'index.html'), html);
   urls.unshift(url);
 }
+// ---------- 일정 페이지 (/event/<id>/): 과거 같은 상황 통계, 검색 유입용 ----------
+{
+  const evd = read('events.json');
+  const kday = (d) => { const t = new Date(d + 'T12:00:00Z'); return `${t.getUTCFullYear()}년 ${t.getUTCMonth() + 1}월 ${t.getUTCDate()}일(${'일월화수목금토'[t.getUTCDay()]})`; };
+  const evLinks = [];
+  for (const e of (evd && evd.ev) || []) {
+    const k = e.assets[0][0], m = e.stats[k]; if (!m) continue;
+    const url = `${SITE}/event/${e.id}/`;
+    const t = `${e.seo}`;
+    const desc = `${e.title} ${e.lab} ${e.assets[0][1]}는 과거 ${m.n}번 중 ${m.up}번 상승했어요(평균 ${sign(m.avg)}). ${e.next ? `다음 일정 ${kday(e.next)}.` : ''} 회차별 기록과 국내 ETF 반응까지 정리.`;
+    const cards = e.assets.filter((a) => e.stats[a[0]]).map(([s, n, mk]) => { const x = e.stats[s]; return `<div class="card"><h2>${esc(n)}${mk === 'kr' ? ' <span class="sub">(한국장)</span>' : ''}</h2><p style="margin:0"><b style="font-size:22px">${x.up}/${x.n}번 상승</b> · 평균 <b class="${cls(x.avg)}">${sign(x.avg)}</b></p><p class="sub" style="margin:6px 0 0">평균 움직임 ±${x.abs.toFixed(1)}% · 최고 <span class="up">${sign(x.max)}</span>(${x.maxD}) · 최저 <span class="down">${sign(x.min)}</span>(${x.minD})</p></div>`; }).join('');
+    const cols = e.assets.filter((a) => e.stats[a[0]]);
+    const tbl = `<table><tr><td class="sub">날짜</td>${cols.map((a) => `<td class="sub" style="text-align:right">${esc(a[1].replace('TIGER ', ''))}</td>`).join('')}</tr>${e.rows.map((r) => `<tr><td>${r.d}</td>${cols.map((a) => `<td class="${cls(r.r[a[0]])}" style="text-align:right">${r.r[a[0]] == null ? '-' : sign(r.r[a[0]])}</td>`).join('')}</tr>`).join('')}</table>`;
+    const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<title>${esc(t)} | 데이앤나잇 ETF</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${url}">
+<meta property="og:type" content="article"><meta property="og:title" content="${esc(t)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:image" content="${SITE}/og.png"><meta property="og:url" content="${url}"><meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/icon.svg"><meta name="theme-color" content="#0f1115"><style>${CSS} table{font-size:13px}</style></head><body>
+<a class="top" href="/"><img src="/icon.svg" alt="">데이앤나잇 ETF</a>
+<h1>${e.icon} ${esc(e.title)}: ${esc(e.lab)} 시장은 어떻게 움직였을까</h1>
+<div class="sub">${e.next ? `다음 일정 <b>${kday(e.next)}</b> · ${esc(e.when)} (${esc(e.kst)})` : '다음 일정 발표 전'}</div>
+<div class="card"><p style="margin:0;font-size:17px">과거 <b>${m.n}번</b> 중 ${esc(e.lab)} ${esc(e.assets[0][1])}는 <b class="up">${m.up}번 상승</b>, <b class="down">${m.n - m.up}번 하락</b>했어요. 평균 등락은 <b class="${cls(m.avg)}">${sign(m.avg)}</b>, 평균 움직임 폭은 ±${m.abs.toFixed(1)}%예요.</p><p class="sub" style="margin:8px 0 0">${esc(e.desc)}</p></div>
+${cards}
+<a class="cta" href="/?ev=${e.id}">앱 화면으로 보기 · 실시간 밤 시세 →</a>
+<div class="card"><h2>회차별 기록</h2>${tbl}</div>
+<p class="note">과거 통계일 뿐 앞으로도 같다는 보장은 없으며 투자 권유가 아닙니다. 미국 지수 종가 기준, 한국 ETF는 발표 다음 날 아침 시작한 거래일 기준이며 상장 이후 기록만 포함합니다. <a href="/night/">오늘 밤 해외 ETF 시황</a> · <a href="/guide/">가이드</a></p></body></html>`;
+    fs.mkdirSync(path.join(siteDir, 'event', e.id), { recursive: true });
+    fs.writeFileSync(path.join(siteDir, 'event', e.id, 'index.html'), html);
+    urls.unshift(url); evLinks.push(`<a href="/event/${e.id}/">${esc(e.title)}</a>`);
+  }
+}
 for (const g of ['','inav','night-price','us-market-hours','premium-discount','hedged','futures']) urls.push(`${SITE}/guide/${g}${g?'/':''}`);
 
 const today = atKst.toISOString().slice(0, 10);
