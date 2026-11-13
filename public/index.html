@@ -287,6 +287,7 @@ const HOME_ADS=[ // 시간이 되면 자동 교체 (from 시각부터 표시, �
  {from:'2026-11-11T00:00:00+09:00',img:'img/ad-gyul.jpg',name:'제주 산지직송 햇감귤 3kg',desc:'밤샘 차트 보면서 까먹기 좋은 제철 감귤',url:'https://toss.shopping/_m/jRfwWrVf',price:5900,orig:30000},
  {from:'2026-11-12T19:50:00+09:00',img:'img/ad-jumeok.jpg',name:'애슐리 주먹밥 체험팩 7가지맛 (100g×7개)',desc:'미국장 기다리며 전자레인지 2분 야식',url:'https://toss.shopping/_m/RI1ipfte',price:9900,orig:19750},
  {from:'2026-11-12T20:40:00+09:00',img:'img/ad-anker.jpg',name:'앤커 랩탑 파워뱅크 25000mAh 165W (C타입 케이블 일체형)',desc:'밤새 차트 봐도 노트북·폰 배터리 걱정 끝',url:'https://toss.shopping/_m/791CO0Kz'},
+ {from:'2026-11-13T14:55:00+09:00',img:'img/ad-dsenne.jpg',name:'디센느 3in1 맥세이프 초고속 무선 충전기 (아이폰·갤럭시·애플워치)',desc:'폰·워치·이어폰을 한 번에, 침대 옆 밤샘 충전 스테이션',url:'https://toss.shopping/_m/T1o3ecK5'},
 ];
 const HOME_AD=(()=>{const now=Date.now();let a=null;for(const x of HOME_ADS)if(Date.parse(x.from)<=now)a=x;return a})();
 const homeAd=()=>{const a=HOME_AD;if(!a)return store.get('me',0)?`<div class="adhome empty"><div class="ah-img">📦</div><div class="ah-t"><span class="adb">추천템 자리</span><b>여기에 상품이 들어가요</b><span class="abd">쉐어링크를 보내주면 채워져요 (이 칸은 본인 브라우저에만 보여요)</span></div></div>`:'';
