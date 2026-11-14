@@ -7,6 +7,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      FB_KEY: ${{ secrets.FB_KEY }}
     steps:
       - uses: actions/checkout@v4
       - name: workers.dev 주소 준비 (처음 한 번)
@@ -23,8 +25,22 @@ jobs:
             done
           fi
           echo "SUBDOMAIN=$S"
+          # 의견 저장용 KV (없으면 만들고 wrangler.toml에 연결)
+          ID=$(curl -s -H "Authorization: Bearer $T" "https://api.cloudflare.com/client/v4/accounts/$A/storage/kv/namespaces?per_page=100" | jq -r '.result[]|select(.title=="etf-night-feedback")|.id' | head -1)
+          [ -z "$ID" ] && ID=$(curl -s -X POST -H "Authorization: Bearer $T" -H 'Content-Type: application/json' -d '{"title":"etf-night-feedback"}' "https://api.cloudflare.com/client/v4/accounts/$A/storage/kv/namespaces" | jq -r '.result.id // empty')
+          [ -n "$ID" ] && printf '\n[[kv_namespaces]]\nbinding = "FB"\nid = "%s"\n' "$ID" >> worker/wrangler.toml
+          echo "KV=${ID:+ok}"
       - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: worker
+      - name: 의견 보기 비밀번호 넣기 (FB_KEY가 있을 때만)
+        if: env.FB_KEY != ''
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          secrets: FB_KEY
+          command: secret list

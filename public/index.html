@@ -228,6 +228,9 @@ button:active,.cat:active,.seg button:active{transform:scale(.94)}
 .cat:hover,.li:hover{background:#1c2029}
 
 
+.fbx{position:relative;background:linear-gradient(150deg,#1e2433,#161a22);border:1px dashed #3a4258;border-radius:16px;padding:14px;margin:14px 0;display:flex;flex-direction:column;gap:8px}.fbx b{font-size:16px}.fbx span{font-size:13px;color:#c9ced8}.fbx small{font-size:11.5px;color:var(--mute)}
+.fbx textarea,.fbx input{width:100%;background:#12151b;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:10px;font:inherit;font-size:14px;resize:vertical}
+.fbx button{background:var(--acc);color:#111;border:0;border-radius:12px;padding:12px;font-weight:800;font-size:15px}.fbx button:disabled{opacity:.6}
 .evstrip{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:linear-gradient(120deg,#22283a,#171b25);border:1px solid #333b52;border-radius:16px;padding:11px 14px;margin-bottom:12px;color:var(--ink);font:inherit}.evstrip>div{flex:1}.evstrip b{display:block;font-size:14.5px}.evstrip em{font-style:normal;color:var(--acc);text-shadow:0 0 8px rgba(245,197,66,.6);margin-left:4px}.evstrip span{font-size:12.5px;color:#c9ced8}.evstrip i{font-style:normal}.evstrip .go{font-size:22px;color:var(--acc)}
 .evc{display:block;width:100%;text-align:left;background:linear-gradient(150deg,#1c2232,#151922);border:1px solid #2b3245;border-radius:18px;padding:14px;margin-bottom:10px;color:var(--ink);font:inherit}
 .evh{display:flex;align-items:center;gap:10px}.evh>div{flex:1}.evh b{display:block;font-size:17px}.evh span{font-size:12px;color:var(--mute)}
@@ -416,6 +419,19 @@ const kday=d=>{const t=new Date(d+'T12:00:00Z');return `${t.getUTCMonth()+1}월 
 const addDay=(d,n)=>new Date(Date.parse(d+'T12:00:00Z')+n*864e5).toISOString().slice(0,10);
 function openEv(id){push({name:'ev',id,tab:'events'})}
 
+
+// ---------- 의견 받기 ----------
+const fbBox=()=>`<div class="fbx"><b>💡 이런 기능 있으면 좋겠다!</b><span>원하는 기능이나 불편한 점을 남겨주세요. 좋은 의견은 실제로 만들어 넣어드려요.</span>
+ <textarea id="fbm" maxlength="600" rows="3" placeholder="예) 내 ETF 알림 기능 있으면 좋겠어요"></textarea>
+ <input id="fbc" maxlength="80" placeholder="답장 받을 연락처 (선택, 안 적어도 돼요)"><input id="fbh" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;width:1px;height:1px">
+ <button onclick="sendFb(this)">의견 보내기</button><small>연락처를 적지 않으면 누가 보냈는지 알 수 없어요. 개인정보는 적지 말아주세요.</small></div>`;
+async function sendFb(btn){const m=$('#fbm').value.trim();if(m.length<2){$('#fbm').focus();return}
+  btn.disabled=true;btn.textContent='보내는 중…';
+  try{const r=await fetch('https://etf-night-mkt.seonku0126.workers.dev/fb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msg:m,c:$('#fbc').value.trim(),hp:$('#fbh').value,p:view.name})});
+    const j=await r.json().catch(()=>({}));
+    if(r.ok){btn.closest('.fbx').innerHTML='<b>🙏 고마워요!</b><span>보내주신 의견 꼭 읽어볼게요. 만들어지면 사이트에 반영돼요.</span>';return}
+    btn.textContent=j.error==='slow'?'1분 뒤에 다시 보내주세요':'다시 시도해주세요';}catch(e){btn.textContent='다시 시도해주세요'}
+  btn.disabled=false}
 function evStrip(){if(!EVD||!EVD.ev)return'';const e=EVD.ev.filter(x=>x.next).sort((a,b)=>a.next<b.next?-1:1)[0];if(!e)return'';const k=e.assets[0][0],t=e.stats[k];if(!t)return'';
   return `<button class="evstrip" onclick="go('events');openEv('${e.id}')"><span class="evi">${e.icon}</span><div><b>${esc(e.title)} <em>${dday(e.next)}</em></b><span>과거 ${t.n}번 중 ${esc(e.lab)} ${esc(e.assets[0][1])} <i class="up">${t.up}번 상승</i></span></div><i class="go">›</i></button>`}
 function eventsView(){
@@ -424,7 +440,7 @@ function eventsView(){
   return `<div class="note">다가오는 일정과, 과거 같은 일이 있었던 다음 날 시장이 어떻게 움직였는지 보여줘요</div>`+xs.map(e=>{const k=e.assets[0][0],st=e.stats[k]||{},st2=e.stats['^NDX'];return `<button class="evc" onclick="openEv('${e.id}')">
     <div class="evh"><span class="evi">${e.icon}</span><div><b>${esc(e.title)}</b><span>${e.next?kday(e.next)+' · '+esc(e.when):'다음 일정 발표 전'}</span></div><em>${e.next?dday(e.next):''}</em></div>
     <div class="evs"><div><span>${esc(e.lab)} ${esc(e.assets[0][1])}</span><b>${st.n}번 중 <i class="up">${st.up}번 상승</i></b></div>${st2&&k!=='^NDX'?`<div><span>${esc(e.lab)} 나스닥100</span><b>${st2.n}번 중 <i class="up">${st2.up}번 상승</i></b></div>`:''}</div>
-    <div class="evgo">과거 기록 전부 보기 ›</div></button>`}).join('')+`<div class="note" style="margin-top:6px">과거 통계일 뿐 앞으로도 같다는 보장은 없어요. 투자 권유가 아닙니다.</div>`;
+    <div class="evgo">과거 기록 전부 보기 ›</div></button>`}).join('')+`<div class="note" style="margin-top:6px">과거 통계일 뿐 앞으로도 같다는 보장은 없어요. 투자 권유가 아닙니다.</div>`+fbBox();
 }
 function evView(id){
   const e=EVD&&EVD.ev.find(x=>x.id===id);if(!e)return '<div class="empty">일정을 찾지 못했어요</div>';
@@ -555,7 +571,7 @@ function rankView(){
   const fbd=(LIST.find(x=>x.fbd)||{}).fbd;
   const note={nightUp:'한국 장 마감 뒤 지금까지 오른 순 (마감 iNAV 대비)',nightDown:'한국 장 마감 뒤 지금까지 내린 순 (마감 iNAV 대비)',amt:'오늘 한국 장 거래대금',fbuy:`외국인 순매수 금액 (${fbd?fbd.slice(4,6)+'/'+fbd.slice(6):''} 기준)`,fsell:`외국인 순매도 금액 (${fbd?fbd.slice(4,6)+'/'+fbd.slice(6):''} 기준)`,todayUp:'오늘 한국 장 등락률',todayDown:'오늘 한국 장 등락률'}[k];
   const seg=RANKS.map(r=>`<button class="${rankKey===r[0]?'on':''}" onclick="rankKey='${r[0]}';render()">${r[1]}</button>`).join('');
-  return `${mktDash()}${nightBanner()}${evStrip()}${homeAd()}<div class="seg">${seg}</div><div class="note">${note} · 상위 ${xs.length}개</div><div class="list">${xs.map((x,i)=>li(x,i,right(x))).join('')||'<div class="empty">데이터가 없어요</div>'}</div>${adSlot()}`;
+  return `${mktDash()}${nightBanner()}${evStrip()}${homeAd()}<div class="seg">${seg}</div><div class="note">${note} · 상위 ${xs.length}개</div><div class="list">${xs.map((x,i)=>li(x,i,right(x))).join('')||'<div class="empty">데이터가 없어요</div>'}</div>${adSlot()}${fbBox()}`;
 }
 function card(code){
   const d=DATA[code],m=LIST.find(x=>x.code===code)||{};

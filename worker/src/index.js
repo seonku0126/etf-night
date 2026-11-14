@@ -61,12 +61,36 @@ async function px() {
   }));
   return { at: new Date().toISOString(), open: !!open, n: Object.keys(q).length, q };
 }
+// /fb: 의견 받기 (KV 저장). 목록은 FB_KEY가 있어야 볼 수 있음
+async function fb(req, env, cors) {
+  const J = (o, st = 200) => new Response(JSON.stringify(o), { status: st, headers: { ...cors, 'Content-Type': 'application/json' } });
+  if (!env.FB) return J({ error: 'off' }, 503);
+  const url = new URL(req.url);
+  if (req.method === 'GET' && url.pathname === '/fb/list') {
+    if (!env.FB_KEY || url.searchParams.get('k') !== env.FB_KEY) return J({ error: 'key' }, 403);
+    const l = await env.FB.list({ prefix: 'm:', limit: 200 });
+    const items = await Promise.all(l.keys.map(async (k) => JSON.parse((await env.FB.get(k.name)) || '{}')));
+    return J({ items: items.sort((a, b) => (b.t || '').localeCompare(a.t || '')) });
+  }
+  if (req.method !== 'POST') return J({ error: 'method' }, 405);
+  let b = {}; try { b = await req.json(); } catch (e) {}
+  if (b.hp) return J({ ok: 1 }); // 봇 함정 칸
+  const msg = String(b.msg || '').trim().slice(0, 600), contact = String(b.c || '').trim().slice(0, 80);
+  if (msg.length < 2) return J({ error: 'empty' }, 400);
+  const ip = req.headers.get('cf-connecting-ip') || '0';
+  const rk = 'r:' + ip; if (await env.FB.get(rk)) return J({ error: 'slow' }, 429);
+  await env.FB.put(rk, '1', { expirationTtl: 60 });
+  const t = new Date().toISOString();
+  await env.FB.put('m:' + t + ':' + Math.random().toString(36).slice(2, 6), JSON.stringify({ t, msg, c: contact, p: String(b.p || '').slice(0, 40) }), { expirationTtl: 60 * 60 * 24 * 365 });
+  return J({ ok: 1 });
+}
 export default {
   async fetch(req, env, ctx) {
     const o = req.headers.get('Origin') || '';
     const cors = { 'Access-Control-Allow-Origin': ORIGINS.includes(o) ? o : ORIGINS[0], Vary: 'Origin' };
-    if (req.method === 'OPTIONS') return new Response(null, { headers: { ...cors, 'Access-Control-Allow-Methods': 'GET' } });
+    if (req.method === 'OPTIONS') return new Response(null, { headers: { ...cors, 'Access-Control-Allow-Methods': 'GET, POST', 'Access-Control-Allow-Headers': 'Content-Type' } });
     const url = new URL(req.url);
+    if (url.pathname.startsWith('/fb')) return fb(req, env, cors);
     if (url.pathname !== '/mkt' && url.pathname !== '/px') return new Response('ok', { headers: cors });
     const isPx = url.pathname === '/px';
     const cache = caches.default, key = new Request('https://cache.local' + url.pathname);

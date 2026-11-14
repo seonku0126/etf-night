@@ -1,6 +1,6 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self' https://abacus.jasoncameron.dev">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self' https://abacus.jasoncameron.dev https://etf-night-mkt.seonku0126.workers.dev">
 <title>방문자 통계 · 데이앤나잇 ETF</title>
 <style>body{margin:0 auto;max-width:520px;padding:18px;background:#0f1115;color:#eef0f4;font:15px/1.5 -apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
 .k{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0}.k div{background:#181b22;border:1px solid #262a33;border-radius:14px;padding:12px;text-align:center}.k span{display:block;color:#8a919e;font-size:12px}.k b{font-size:24px}
@@ -23,4 +23,12 @@ const get=async k=>{try{const r=await fetch(`https://abacus.jasoncameron.dev/get
  const sv=await Promise.all(S.map(async([k])=>get('src-'+k+'-'+days[0])));
  document.getElementById('src').innerHTML=S.map(([k,n],i)=>`<div><span>오늘 ${n}</span><b>${sv[i]}</b></div>`).join('');
  document.getElementById('at').textContent='실시간 · '+new Date().toLocaleString('ko-KR');})();
+</script>
+<div id="fb" style="margin-top:24px"></div>
+<script>
+(async()=>{const k=new URLSearchParams(location.search).get('k');const el=document.getElementById('fb');if(!k){el.innerHTML='<p style="color:#8a919e;font-size:13px">받은 의견을 보려면 주소 끝에 ?k=비밀번호 를 붙이세요</p>';return}
+try{const r=await fetch('https://etf-night-mkt.seonku0126.workers.dev/fb/list?k='+encodeURIComponent(k));const j=await r.json();
+if(!r.ok){el.innerHTML='<p style="color:#ff5a5f">비밀번호가 맞지 않아요</p>';return}
+const e=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+el.innerHTML='<h2 style="font-size:18px">💡 받은 의견 '+j.items.length+'개</h2>'+j.items.map(x=>'<div style="background:#181b22;border:1px solid #262a33;border-radius:12px;padding:12px;margin:8px 0"><div style="font-size:12px;color:#8a919e">'+new Date(x.t).toLocaleString('ko-KR')+(x.c?' · 연락처: '+e(x.c):'')+'</div><div style="margin-top:6px;white-space:pre-wrap">'+e(x.msg)+'</div></div>').join('')}catch(err){el.textContent='불러오지 못했어요'}})();
 </script></body></html>
