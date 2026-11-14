@@ -61,6 +61,27 @@ async function px() {
   }));
   return { at: new Date().toISOString(), open: !!open, n: Object.keys(q).length, q };
 }
+// /hist?c=133690: 투자 시뮬레이터용 일별 종가 + 분배금(분배락일) 전체 기간 (Yahoo chart, 12시간 캐시)
+// 응답: { c, n, t:[YYYYMMDD...], p:[종가...], d:[[YYYYMMDD, 1주당 분배금]...] }
+async function hist(code) {
+  const ymd = (s) => { const d = new Date((s + 9 * 3600) * 1000); return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate(); };
+  for (const sfx of ['KS', 'KQ']) {
+    for (const host of ['query1', 'query2']) {
+      try {
+        const r = await fetch(`https://${host}.finance.yahoo.com/v8/finance/chart/${code}.${sfx}?period1=0&period2=9999999999&interval=1d&events=div%7Csplit`, { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/130 Safari/537.36', Accept: 'application/json' } });
+        if (!r.ok) continue;
+        const R = (((await r.json()).chart || {}).result || [])[0];
+        if (!R || !R.timestamp) break;
+        const cl = R.indicators.quote[0].close, t = [], p = [];
+        R.timestamp.forEach((s, i) => { const v = cl[i]; if (v == null || !(v > 0)) return; const k = ymd(s); if (t.length && t[t.length - 1] === k) { p[p.length - 1] = v; return; } t.push(k); p.push(+v.toPrecision(7)); });
+        if (t.length < 5) break;
+        const d = Object.values((R.events || {}).dividends || {}).map((x) => [ymd(x.date), +(+x.amount).toFixed(4)]).filter((x) => x[1] > 0).sort((a, b) => a[0] - b[0]);
+        return { c: code, n: (R.meta || {}).shortName || '', t, p, d };
+      } catch (e) {}
+    }
+  }
+  return null;
+}
 // /fb: 의견 받기 (KV 저장). 목록은 FB_KEY가 있어야 볼 수 있음
 async function fb(req, env, cors) {
   const J = (o, st = 200) => new Response(JSON.stringify(o), { status: st, headers: { ...cors, 'Content-Type': 'application/json' } });
@@ -91,6 +112,22 @@ export default {
     if (req.method === 'OPTIONS') return new Response(null, { headers: { ...cors, 'Access-Control-Allow-Methods': 'GET, POST', 'Access-Control-Allow-Headers': 'Content-Type' } });
     const url = new URL(req.url);
     if (url.pathname.startsWith('/fb')) return fb(req, env, cors);
+    if (url.pathname === '/hist') {
+      const c = (url.searchParams.get('c') || '').toUpperCase();
+      const J = (o, st, cc) => new Response(JSON.stringify(o), { status: st, headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': cc } });
+      if (!/^[0-9A-Z]{6}$/.test(c)) return J({ error: 'code' }, 400, 'no-store');
+      const cache = caches.default, key = new Request('https://cache.local/hist/' + c);
+      let res = await cache.match(key);
+      if (!res) {
+        const d = await hist(c);
+        if (!d) return J({ error: 'nodata' }, 404, 'public, max-age=600');
+        res = new Response(JSON.stringify(d), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=43200' } });
+        ctx.waitUntil(cache.put(key, res.clone()));
+      }
+      const out = new Response(res.body, res);
+      for (const [k, v] of Object.entries(cors)) out.headers.set(k, v);
+      return out;
+    }
     if (url.pathname !== '/mkt' && url.pathname !== '/px') return new Response('ok', { headers: cors });
     const isPx = url.pathname === '/px';
     const cache = caches.default, key = new Request('https://cache.local' + url.pathname);

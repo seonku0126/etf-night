@@ -266,6 +266,24 @@ h1 span{background:linear-gradient(90deg,#f5c542,#ffde7a,#ff9f43,#f5c542);backgr
 .ht b,.mt b{text-shadow:0 0 8px rgba(255,255,255,.25)}
 #status{font-weight:700;color:#2ee59d;text-shadow:0 0 8px rgba(46,229,157,.6);animation:glow 2s ease-in-out infinite}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+.fhead{margin:4px 0 12px}.fhead b{display:block;font-size:18px}.fhead span{color:var(--mute);font-size:13px}
+.fq{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 12px 6px;margin-bottom:10px}
+.fqt{font-weight:700;font-size:14.5px;margin-bottom:8px}.fqt span{color:var(--mute);font-weight:400;font-size:12px;margin-left:6px}
+.seg.wrap{flex-wrap:wrap;overflow:visible}
+.fr{display:flex;align-items:center;border-bottom:1px solid var(--line)}.fr:last-child{border-bottom:0}.fr .li{flex:1;min-width:0;border-bottom:0;padding-right:6px}
+.addc{flex:0 0 auto;margin-right:10px;background:none;border:1px solid var(--line);color:var(--acc);border-radius:999px;padding:6px 9px;font-size:12.5px;font-weight:600}.addc.on{color:var(--mute)}
+.fcmp{display:block;width:100%;background:var(--card);border:1px solid var(--acc);color:var(--acc);border-radius:12px;padding:11px;font-size:14px;font-weight:600;margin:0 0 10px}
+.schips{display:flex;flex-wrap:wrap;gap:6px}.schip{display:inline-flex;align-items:center;gap:6px;border:1px solid;border-radius:999px;padding:5px 6px 5px 10px;font-size:13px}
+.schip i,.slg i{width:9px;height:9px;border-radius:50%;display:inline-block}.schip button{background:none;border:0;color:var(--mute);font-size:13px;padding:0 4px}
+.sin{background:#13161c;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 10px;font-size:15px;width:140px;text-align:right;margin:0 2px 8px}.sin.sm{width:52px}input[type=date].sin{width:auto;text-align:left;margin-top:4px}
+.slab{display:block;font-size:14px;color:var(--mute);margin-top:6px}
+.sgo{display:block;width:100%;background:var(--acc);color:#111;border:0;border-radius:12px;padding:13px;font-size:16px;font-weight:700;margin:4px 0 12px}.sgo:disabled{opacity:.5}
+.sbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px}
+.schart{position:relative;margin-top:10px;touch-action:pan-y}.schart svg{width:100%;height:auto;display:block}
+.stip{position:absolute;top:6px;display:none;background:rgba(15,17,21,.95);border:1px solid var(--line);border-radius:10px;padding:7px 9px;font-size:12px;pointer-events:none;white-space:nowrap}
+.stip div{display:flex;align-items:center;gap:5px}.stip i{width:8px;height:8px;border-radius:50%;display:inline-block}.stip .m{color:var(--mute)}
+.slg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--mute);margin-top:6px}.slg span{display:inline-flex;align-items:center;gap:5px}.slg i.dash{width:14px;height:0;border-radius:0;border-top:2px dashed var(--mute)}
+.sres .sval{font-size:22px}
 </style>
 </head>
 <body>
@@ -275,7 +293,7 @@ h1 span{background:linear-gradient(90deg,#f5c542,#ffde7a,#ff9f43,#f5c542);backgr
   <div class="sub" id="status">불러오는 중…</div>
   <div class="search"><input id="q" placeholder="🔍 ETF 이름으로 검색 (예: 나스닥, S&P500)" autocomplete="off"><div class="results" id="res"></div></div>
 </header>
-<nav class="tabs"><button data-t="rank">순위</button><button data-t="events">일정</button><button data-t="cats">카테고리</button><button data-t="whale">큰손</button><button data-t="fav">관심</button></nav>
+<nav class="tabs"><button data-t="rank">순위</button><button data-t="events">일정</button><button data-t="find">찾기</button><button data-t="sim">시뮬</button><button data-t="whale">큰손</button><button data-t="fav">관심</button></nav>
 <main id="main"><div class="empty">불러오는 중…</div></main>
 <footer>추정치이며 투자 권유가 아닙니다. 마감 iNAV, 구성종목 비중, 미국 시세, 원/달러 환율로 계산합니다. 미국 정규장이 닫혀 있을 때 큰 숫자는 종목별 프리·애프터마켓 가격(거래가 없으면 지수 선물)을 반영한 값입니다. 밤 추정은 시가총액 상위 150개만 계산하고, 거래대금·등락률은 한국 장 기준, 외국인 순매수는 전 거래일 기준입니다.</footer>
 <script>
@@ -283,7 +301,7 @@ const $=s=>document.querySelector(s);
 const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 let favs=store.get('favs',['133690','360750','381180']);
 let META=null,DET={},LIST=[],DATA={};
-let view={name:(t=>['rank','events','cats','whale','fav'].includes(t)?t:'rank')(store.get('tab2','rank'))},rankKey='nightUp',catSort='cap';
+let view={name:(t=>['rank','events','find','sim','whale','fav'].includes(t)?t:'rank')(store.get('tab2','rank'))},rankKey='nightUp',catSort='cap';
 // ---------- 제휴 상품 자리 (토스쇼핑 쉐어링크) ----------
 const ADS=[{img:'img/ad-charger.jpg',name:'맥도도 GaN 67W 케이블 일체형 2포트 충전기',desc:'케이블 챙길 필요 없이 바로 충전',url:'https://toss.shopping/_m/roX3Fs9A'}];
 // 홈(순위) 화면 큰 상품 칸: HOME_AD에 상품을 넣으면 모두에게 보이고, 비어 있으면 본인(?me) 브라우저에만 빈 칸 미리보기
@@ -541,7 +559,7 @@ function pfChip(){
   return `<button class="pfbtn" onclick="openPF()">${t}</button>`}
 function openPF(){pfForm=null;push({name:'pf',tab:'pf'})}
 // ---------- 화면 ----------
-function favView(){return (favs.length?favs.map(c=>(load(c),card(c))).join(''):'<div class="empty">ETF를 검색하거나 카테고리에서 골라 담아보세요</div>')+adSlot()}
+function favView(){return (favs.length?favs.map(c=>(load(c),card(c))).join(''):'<div class="empty">ETF를 검색하거나 찾기 탭에서 골라 담아보세요</div>')+adSlot()}
 function catsView(){
   const g={};for(const x of LIST)(g[x.cat]=g[x.cat]||[]).push(x);
   return `<div class="note">분류를 누르면 시가총액 순으로 쭉 볼 수 있어요</div><div class="grid">`+CATS.filter(c=>g[c[0]]).map(([k,n])=>{
@@ -553,7 +571,164 @@ function catView(k){
   const S={cap:(a,b)=>(b.cap||0)-(a.cap||0),night:(a,b)=>(b.pct??-1e9)-(a.pct??-1e9),today:(a,b)=>(b.ch??-1e9)-(a.ch??-1e9),amt:(a,b)=>(b.amt||0)-(a.amt||0)};
   xs=xs.slice().sort(S[catSort]);
   const seg=[['cap','시가총액'],['night','마감 후 등락'],['today','오늘 등락'],['amt','거래대금']].map(([k2,n])=>`<button class="${catSort===k2?'on':''}" onclick="catSort='${k2}';render()">${n}</button>`).join('');
-  return `<button class="back" onclick="go('cats')">← 카테고리</button><div class="ttl"><b>${catName(k)}</b><span class="s">${xs.length}개</span></div><div class="seg">${seg}</div><div class="list">${xs.map((x,i)=>li(x,null,catSort==='today'?{mode:'today'}:{})).join('')}</div>${adSlot()}`;
+  return `<button class="back" onclick="go('find')">← 찾기</button><div class="ttl"><b>${catName(k)}</b><span class="s">${xs.length}개</span></div><div class="seg">${seg}</div><div class="list">${xs.map((x,i)=>li(x,null,catSort==='today'?{mode:'today'}:{})).join('')}</div>${adSlot()}`;
+}
+// ---------- 나에게 맞는 ETF 찾기 (조건으로 걸러보기, 추천 아님) ----------
+const FIND_THEMES=['ndx','spx','div','semi','ai','power','space','health','china','world','gold'];
+const RE_LEV=/레버리지|인버스|2X|곱버스/i,RE_CC=CATS.find(c=>c[0]==='cc')[2],RE_H=/\(H\)|헤지|합성 H/;
+let FD=Object.assign({th:[],fx:'any',lev:'no',cc:'any',sort:'cap'},store.get('find',{}));
+function fdSet(k,v){if(k==='th'){FD.th=FD.th.includes(v)?FD.th.filter(x=>x!==v):[...FD.th,v];if(v==='all')FD.th=[]}else FD[k]=v;store.set('find',FD);render()}
+function findList(){
+  let xs=LIST.slice();
+  if(FD.th.length)xs=xs.filter(x=>FD.th.some(k=>(CATS.find(c=>c[0]===k)||[])[2].test(x.name)));
+  if(FD.lev==='no')xs=xs.filter(x=>!RE_LEV.test(x.name));else if(FD.lev==='only')xs=xs.filter(x=>RE_LEV.test(x.name));
+  if(FD.cc==='no')xs=xs.filter(x=>!RE_CC.test(x.name));else if(FD.cc==='only')xs=xs.filter(x=>RE_CC.test(x.name));
+  if(FD.fx==='open')xs=xs.filter(x=>!RE_H.test(x.name));else if(FD.fx==='hedge')xs=xs.filter(x=>RE_H.test(x.name));
+  const S={cap:(a,b)=>(b.cap||0)-(a.cap||0),amt:(a,b)=>(b.amt||0)-(a.amt||0),night:(a,b)=>(b.pct??-1e9)-(a.pct??-1e9)};
+  return xs.sort(S[FD.sort]||S.cap);
+}
+function findView(){
+  const q=(t,body,hint)=>`<div class="fq"><div class="fqt">${t}${hint?`<span>${hint}</span>`:''}</div><div class="seg wrap">${body}</div></div>`;
+  const b=(k,v,n)=>`<button class="${(k==='th'?(v==='all'?!FD.th.length:FD.th.includes(v)):FD[k]===v)?'on':''}" onclick="fdSet('${k}','${v}')">${n}</button>`;
+  const xs=findList(),top=xs.slice(0,60);
+  return `<div class="fhead"><b>🔎 나에게 맞는 ETF 찾기</b><span>조건을 고르면 맞는 ETF만 남겨드려요</span></div>
+  ${q('1. 어디에 투자하고 싶나요?',b('th','all','전체')+FIND_THEMES.map(k=>b('th',k,catName(k))).join(''),'여러 개 고를 수 있어요')}
+  ${q('2. 환율 영향은 어떻게 할까요?',b('fx','any','상관없음')+b('fx','open','환노출 (달러 오르면 같이 이득)')+b('fx','hedge','환헤지 (H)'))}
+  ${q('3. 레버리지·인버스는?',b('lev','no','빼기')+b('lev','any','포함')+b('lev','only','이것만'))}
+  ${q('4. 분배금 스타일은?',b('cc','any','상관없음')+b('cc','no','커버드콜 빼기 (성장형)')+b('cc','only','커버드콜·월배당만'))}
+  <div class="seg">${[['cap','시가총액순'],['amt','거래대금순'],['night','마감 후 등락순']].map(([k,n])=>b('sort',k,n)).join('')}</div>
+  <div class="note">조건에 맞는 ETF ${xs.length}개${xs.length>60?' · 상위 60개':''} · <b>＋비교</b>를 누르면 시뮬레이터에 담겨요 (최대 4개)</div>
+  ${xs.length>1?`<button class="fcmp" onclick="simSet([${xs.slice(0,4).map(x=>`'${x.code}'`).join(',')}])">위에서 ${Math.min(4,xs.length)}개를 시뮬레이터로 비교해보기 ›</button>`:''}
+  <div class="list">${top.map(x=>`<div class="fr">${li(x)}<button class="addc${SIM.codes.includes(x.code)?' on':''}" onclick="simAdd('${x.code}',event)">${SIM.codes.includes(x.code)?'✓ 담김':'＋비교'}</button></div>`).join('')||'<div class="empty">조건에 맞는 ETF가 없어요. 조건을 조금 넓혀보세요</div>'}</div>
+  <div class="note">이름과 분류로 걸러낸 목록이며 특정 상품을 권하는 게 아니에요. 투자 판단과 책임은 본인에게 있어요.</div>${adSlot()}`;
+}
+
+// ---------- 투자 시뮬레이터 (항상 분배금 재투자 기준) ----------
+const HIST='https://etf-night-mkt.seonku0126.workers.dev/hist?c=',SIMC=['#f5c542','#ff5a5f','#4e8cff','#2ee59d'];
+let SIM=Object.assign({codes:['133690','143850'],per:'10',from:'',mode:'lump',amt:10000000,mon:500000,day:25,acct:'gen'},store.get('sim',{}));
+let SIMR=null,SIMBUSY=false,SIMERR='';const HC={};
+function simSave(){store.set('sim',SIM)}
+function simAdd(code,e){if(e)e.stopPropagation();if(SIM.codes.includes(code)){SIM.codes=SIM.codes.filter(c=>c!==code)}else{if(SIM.codes.length>=4){toast('최대 4개까지 비교할 수 있어요');return}SIM.codes=[...SIM.codes,code];toast('시뮬레이터에 담았어요')}SIMR=null;simSave();render()}
+function simSet(codes){SIM.codes=codes.slice(0,4);SIMR=null;simSave();go('sim');simGo()}
+function simDel(code){SIM.codes=SIM.codes.filter(c=>c!==code);SIMR=null;simSave();render()}
+function simOpt(k,v){SIM[k]=v;if(k==='per'&&v!=='date')SIM.from='';SIMR=null;simSave();render();if(SIM.codes.length)simGo()}
+function simNum(k,el){const v=Math.max(0,Math.round(+String(el.value).replace(/[^0-9]/g,'')||0));SIM[k]=k==='day'?Math.min(28,Math.max(1,v||1)):v;SIMR=null;simSave()}
+function simPick(q){const box=$('#s_pick');q=q.trim().toLowerCase().replace(/\s/g,'');if(!q){box.style.display='none';return}
+  const hit=LIST.filter(x=>x.code.toLowerCase().includes(q)||x.name.toLowerCase().replace(/\s/g,'').includes(q)).slice(0,20);
+  box.innerHTML=hit.length?hit.map(x=>`<div onclick="simAdd('${x.code}');$('#s_q').value=''">${esc(x.name)}<small>${x.code}</small></div>`).join(''):'<div><small>검색 결과가 없어요</small></div>';box.style.display='block'}
+function getHist(c){return HC[c]||(HC[c]=fetch(HIST+c).then(r=>r.ok?r.json():null).catch(()=>null).then(d=>{if(!d)delete HC[c];return d}))}
+const ymdS=n=>{n=String(n);return n.slice(0,4)+'.'+n.slice(4,6)+'.'+n.slice(6)};
+const ymdD=n=>new Date(Date.UTC(Math.floor(n/1e4),Math.floor(n/100)%100-1,n%100));
+const toYmd=d=>d.getUTCFullYear()*1e4+(d.getUTCMonth()+1)*100+d.getUTCDate();
+const krw=v=>{if(v==null||!isFinite(v))return'-';const a=Math.abs(v),s=v<0?'-':'';if(a>=1e8){const e=Math.floor(a/1e8),m=Math.round((a%1e8)/1e4);return s+e.toLocaleString('ko-KR')+'억'+(m?' '+m.toLocaleString('ko-KR')+'만':'')+'원'}if(a>=1e4)return s+Math.round(a/1e4).toLocaleString('ko-KR')+'만원';return s+Math.round(a).toLocaleString('ko-KR')+'원'};
+const krwS=v=>{const a=Math.abs(v);return a>=1e8?(v/1e8).toFixed(a>=1e9?0:1)+'억':a>=1e4?Math.round(v/1e4).toLocaleString('ko-KR')+'만':Math.round(v)+''};
+function xirr(fl){ // fl: [[일수, 금액]] (투자는 -, 마지막 평가액 +)
+  const f=r=>fl.reduce((s,[d,a])=>s+a/Math.pow(1+r,d/365),0);let lo=-0.99,hi=10;if(f(lo)*f(hi)>0)return null;
+  for(let i=0;i<200;i++){const m=(lo+hi)/2;if(f(lo)*f(m)<=0)hi=m;else lo=m}return (lo+hi)/2}
+// 한 ETF 계산: 1주 단위로만 사고 남는 돈은 현금으로 들고 있다가 다음에 합쳐서 매수.
+// 분배금: 분배락일 전날까지 보유한 주식 수 기준, 지급일(분배락 3영업일 뒤) 종가로 재투자. 일반계좌는 15.4% 원천징수 후 재투자.
+function simCalc(h,start,o){
+  const t=h.t,p=h.p,N=t.length;let i0=t.findIndex(x=>x>=start);if(i0<0)return null;
+  const tax=o.acct==='gen'?0.154:0,dv=new Map(h.d.map(x=>[x[0],x[1]]));
+  // 분배락일이 휴장일로 찍힌 경우 다음 거래일로 맞춤
+  const dIdx=new Map();for(const [ymd,a] of h.d){const j=t.findIndex(x=>x>=ymd);if(j>=0)dIdx.set(j,(dIdx.get(j)||0)+a)}
+  let sh=0,cash=0,prin=0,divSum=0,divN=0,f=1,fc=0,peak=0,mdd=0;const pend=[],fpend=[],flows=[],ser=[];
+  const d0=ymdD(t[i0]),day=Math.min(28,o.day||1);let nm=new Date(Date.UTC(d0.getUTCFullYear(),d0.getUTCMonth()+1,day));
+  for(let i=i0;i<N;i++){
+    if(i>i0&&dIdx.has(i)){const a=dIdx.get(i)*(1-tax);if(sh>0){pend.push([Math.min(i+3,N-1),sh*a]);divSum+=sh*a;divN++}fpend.push([Math.min(i+3,N-1),f*a])}
+    for(let k=pend.length-1;k>=0;k--)if(pend[k][0]===i){cash+=pend[k][1];pend.splice(k,1)}
+    for(let k=fpend.length-1;k>=0;k--)if(fpend[k][0]===i){f+=fpend[k][1]/p[i];fpend.splice(k,1)}
+    const di=(ymdD(t[i])-d0)/864e5;
+    if(i===i0){const a=o.mode==='lump'?o.amt:o.mon;cash+=a;prin+=a;flows.push([0,-a])}
+    else if(o.mode==='dca'&&ymdD(t[i])>=nm){cash+=o.mon;prin+=o.mon;flows.push([di,-o.mon]);nm=new Date(Date.UTC(nm.getUTCFullYear(),nm.getUTCMonth()+1,day));while(ymdD(t[i])>=nm)nm=new Date(Date.UTC(nm.getUTCFullYear(),nm.getUTCMonth()+1,day))}
+    const n=Math.floor(cash/p[i]);if(n>0){sh+=n;cash-=n*p[i]}
+    const pend$=pend.reduce((s,x)=>s+x[1],0),v=sh*p[i]+cash+pend$;
+    const tri=f*p[i]/p[i0];if(tri>peak)peak=tri;mdd=Math.min(mdd,tri/peak-1);
+    ser.push([t[i],v,prin]);
+  }
+  const last=ser[ser.length-1],yrs=(ymdD(last[0])-d0)/864e5/365.25;
+  const ann=o.mode==='lump'?(yrs>0.05?Math.pow(last[1]/prin,1/yrs)-1:null):xirr([...flows,[(ymdD(last[0])-d0)/864e5,last[1]]]);
+  return {start:t[i0],end:last[0],val:last[1],prin,ret:last[1]/prin-1,ann,mdd,divSum,divN,sh,yrs,ser};
+}
+function simStart(){
+  if(SIM.per==='date'&&SIM.from)return +SIM.from.replace(/-/g,'');
+  if(SIM.per==='max')return 0;
+  const d=new Date(Date.now()+9*3600e3);d.setUTCFullYear(d.getUTCFullYear()-(+SIM.per||10));return toYmd(d);
+}
+async function simGo(){
+  if(!SIM.codes.length||SIMBUSY)return;SIMBUSY=true;SIMERR='';render();
+  try{
+    const hs=await Promise.all(SIM.codes.map(getHist)),ok=[],bad=[];
+    SIM.codes.forEach((c,i)=>hs[i]&&hs[i].t&&hs[i].t.length?ok.push([c,hs[i]]):bad.push(c));
+    if(!ok.length){SIMERR='과거 시세를 불러오지 못했어요. 잠시 후 다시 시도해 주세요';return}
+    const want=simStart(),firsts=ok.map(([c,h])=>[c,h.t[0]]),late=firsts.reduce((a,b)=>b[1]>a[1]?b:a);
+    const start=Math.max(want,late[1]);
+    const o={mode:SIM.mode,amt:SIM.amt||0,mon:SIM.mon||0,day:SIM.day,acct:SIM.acct};
+    if((o.mode==='lump'&&!o.amt)||(o.mode==='dca'&&!o.mon)){SIMERR='투자 금액을 입력해 주세요';return}
+    const rs=ok.map(([c,h])=>({c,name:(M(c)||{}).name||h.n||c,col:SIMC[SIM.codes.indexOf(c)],r:simCalc(h,start,o)})).filter(x=>x.r);
+    SIMR={rs,want,start,late:start>want&&want>0?late:null,bad,o};
+  }finally{SIMBUSY=false;render()}
+}
+function simChart(){
+  const rs=SIMR.rs,W=400,H=230,L=4,R=46,T=10,B=22;
+  const base=rs.reduce((a,b)=>b.r.ser.length>a.r.ser.length?b:a).r.ser.map(x=>x[0]);
+  const step=Math.max(1,Math.ceil(base.length/320)),idx=base.map((_,i)=>i).filter(i=>i%step===0||i===base.length-1),dates=idx.map(i=>base[i]);
+  const lines=rs.map(x=>{const m=new Map(x.r.ser.map(s=>[s[0],s]));let lastV=null;return dates.map(d=>{const s=m.get(d);if(s)lastV=s;return lastV})});
+  const prin=lines[0].map(s=>s&&s[2]);
+  let mx=0;for(const l of lines)for(const s of l)if(s&&s[1]>mx)mx=s[1];for(const v of prin)if(v>mx)mx=v;
+  const rough=mx/4,mag=Math.pow(10,Math.floor(Math.log10(rough))),stp=[1,2,2.5,5,10].map(k=>k*mag).find(k=>k>=rough);mx=Math.ceil(mx*1.04/stp)*stp;
+  const X=i=>L+(W-L-R)*i/Math.max(1,dates.length-1),Y=v=>T+(H-T-B)*(1-v/mx);
+  const path=arr=>arr.map((v,i)=>v==null?'':`${i&&arr[i-1]!=null?'L':'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join('');
+  const grid=Array.from({length:Math.round(mx/stp)+1},(_,k)=>k*stp).map(v=>`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="#262a33"/><text x="${W-R+6}" y="${Y(v)+4}" fill="#8a919e" font-size="11">${krwS(v)}</text>`).join('');
+  const yrsN=new Set(),xl=[];dates.forEach((d,i)=>{const y=Math.floor(d/1e4);if(!yrsN.has(y)){yrsN.add(y);xl.push([i,y])}});const every=Math.ceil(xl.length/6);
+  const xt=xl.filter((_,k)=>k%every===0&&_[0]>0).map(([i,y])=>`<text x="${X(i)}" y="${H-8}" fill="#8a919e" font-size="11" text-anchor="middle">${String(y).slice(2)}년</text>`).join('');
+  window._SC={dates,lines,prin,X,Y,W,L,R,T,B,H,rs};
+  return `<div class="schart"><svg viewBox="0 0 ${W} ${H}" onpointermove="simHover(event)" onpointerdown="simHover(event)" onpointerleave="simHover(null)">${grid}${xt}
+   <path d="${path(prin)}" fill="none" stroke="#8a919e" stroke-width="1.5" stroke-dasharray="5 4"/>
+   ${lines.map((l,k)=>`<path d="${path(l.map(s=>s&&s[1]))}" fill="none" stroke="${rs[k].col}" stroke-width="2.2" stroke-linejoin="round"/>`).join('')}
+   <line id="s_vl" x1="0" x2="0" y1="${T}" y2="${H-B}" stroke="#eef0f4" stroke-opacity=".5" style="display:none"/></svg><div class="stip" id="s_tip"></div></div>
+   <div class="slg">${rs.map(x=>`<span><i style="background:${x.col}"></i>${esc(x.name)}</span>`).join('')}<span><i class="dash"></i>투자 원금</span></div>`;
+}
+function simHover(e){const c=window._SC,tip=$('#s_tip'),vl=$('#s_vl');if(!c||!tip)return;if(!e){tip.style.display='none';vl.style.display='none';return}
+  const svg=e.currentTarget,bx=svg.getBoundingClientRect(),x=(e.clientX-bx.left)/bx.width*c.W;
+  const i=Math.max(0,Math.min(c.dates.length-1,Math.round((x-c.L)/(c.W-c.L-c.R)*(c.dates.length-1))));
+  vl.setAttribute('x1',c.X(i));vl.setAttribute('x2',c.X(i));vl.style.display='';
+  tip.innerHTML=`<b>${ymdS(c.dates[i])}</b>`+c.lines.map((l,k)=>l[i]?`<div><i style="background:${c.rs[k].col}"></i>${krw(l[i][1])}</div>`:'').join('')+`<div class="m">원금 ${krw(c.prin[i])}</div>`;
+  tip.style.display='block';const px=c.X(i)/c.W*bx.width;tip.style.left=(px>bx.width/2?px-tip.offsetWidth-10:px+10)+'px'}
+function simShare(){if(!SIMR||!SIMR.rs.length)return;const o=SIMR.o,best=SIMR.rs.slice().sort((a,b)=>b.r.val-a.r.val)[0],r=best.r;
+  const yr=Math.round(r.yrs);const text=`📈 ${yr}년 전 ${o.mode==='lump'?krw(o.amt)+'을':'매달 '+krw(o.mon)+'씩'} ${best.name}에 넣었다면 지금 ${krw(r.val)} (${(r.ret*100>0?'+':'')+(r.ret*100).toFixed(1)}%, 분배금 재투자)`;
+  const url='https://daynnightetf.com/';if(navigator.share)navigator.share({text,url}).catch(()=>{});else navigator.clipboard&&navigator.clipboard.writeText(text+' '+url).then(()=>toast('결과를 복사했어요'))}
+function simView(){
+  const b=(k,v,n)=>`<button class="${SIM[k]===v?'on':''}" onclick="simOpt('${k}','${v}')">${n}</button>`;
+  const chips=SIM.codes.map((c,i)=>`<span class="schip" style="border-color:${SIMC[i]}"><i style="background:${SIMC[i]}"></i>${esc((M(c)||{}).name||c)}<button onclick="simDel('${c}')" aria-label="빼기">✕</button></span>`).join('');
+  let out='';
+  if(SIMBUSY)out='<div class="empty">과거 시세와 분배금을 불러와 계산하는 중…</div>';
+  else if(SIMERR)out=`<div class="empty">${esc(SIMERR)}</div>`;
+  else if(SIMR&&SIMR.rs.length){
+    const o=SIMR.o,rs=SIMR.rs.slice().sort((a,b)=>b.r.val-a.r.val),r0=rs[0].r;
+    const pct=v=>v==null?'-':(v>0?'+':'')+(v*100).toFixed(1)+'%';
+    out=`<div class="sbox"><div class="meta" style="margin:0">${ymdS(r0.start)} ~ ${ymdS(r0.end)} (${r0.yrs.toFixed(1)}년) · ${o.mode==='lump'?'한 번에 '+krw(o.amt):'매달 '+o.day+'일 '+krw(o.mon)} · 원금 ${krw(r0.prin)}</div>
+     ${SIMR.late?`<div class="chip" style="color:var(--acc);border-color:var(--acc)">${esc((M(SIMR.late[0])||{}).name||SIMR.late[0])} 상장일(${ymdS(SIMR.late[1])})부터 같은 기간으로 비교했어요</div>`:''}
+     ${SIMR.bad.length?`<div class="chip">${SIMR.bad.map(c=>esc((M(c)||{}).name||c)).join(', ')}: 과거 시세를 찾지 못해 뺐어요</div>`:''}
+     ${simChart()}</div>
+     ${rs.map(x=>{const r=x.r;return `<div class="card sres" style="border-left:4px solid ${x.col}"><div class="name">${esc(x.name)}<span class="code">${x.c}</span></div>
+      <div class="hrow" style="align-items:flex-end;margin-top:6px"><div><div class="meta" style="margin:0">지금 평가금액</div><b class="sval">${krw(r.val)}</b></div><div style="text-align:right"><span class="big ${cls(r.ret)}" style="font-size:22px">${pct(r.ret)}</span><div class="meta" style="margin:0">원금 대비</div></div></div>
+      <div class="kv"><div><span>${o.mode==='lump'?'연평균 수익률':'연환산 수익률'}</span><b class="${cls(r.ann)}">${pct(r.ann)}</b></div><div><span>최대 낙폭 (MDD)</span><b class="down">${(r.mdd*100).toFixed(1)}%</b></div>
+      <div><span>받은 분배금${o.acct==='gen'?' (세후)':''}</span><b>${krw(r.divSum)}</b></div><div><span>재투자 횟수 · 보유</span><b>${r.divN}회 · ${r.sh.toLocaleString('ko-KR')}주</b></div></div></div>`}).join('')}
+     <button class="fcmp" onclick="simShare()">↗ 결과 공유하기</button>`;
+  }else out='<div class="empty">ETF를 고르고 <b>계산하기</b>를 눌러보세요</div>';
+  return `<div class="fhead"><b>📈 투자 시뮬레이터</b><span>그때 샀다면 지금 얼마일까? · 분배금 재투자 기준</span></div>
+  <div class="fq"><div class="fqt">비교할 ETF <span>최대 4개</span></div><div class="schips">${chips}</div>
+   ${SIM.codes.length<4?`<div class="search" style="margin-top:8px"><input id="s_q" placeholder="＋ ETF 추가 (이름 검색)" autocomplete="off" oninput="simPick(this.value)"><div class="results" id="s_pick"></div></div>`:''}</div>
+  <div class="fq"><div class="fqt">언제부터?</div><div class="seg wrap">${b('per','1','1년 전')}${b('per','3','3년 전')}${b('per','5','5년 전')}${b('per','10','10년 전')}${b('per','max','상장일부터')}${b('per','date','날짜 지정')}</div>
+   ${SIM.per==='date'?`<input class="sin" type="date" value="${SIM.from}" min="2002-01-01" onchange="SIM.from=this.value;SIMR=null;simSave()">`:''}</div>
+  <div class="fq"><div class="fqt">어떻게 투자?</div><div class="seg wrap">${b('mode','lump','한 번에 (거치식)')}${b('mode','dca','매달 (적립식)')}</div>
+   ${SIM.mode==='lump'?`<label class="slab">투자 금액 <input class="sin" inputmode="numeric" value="${(SIM.amt||0).toLocaleString('ko-KR')}" onchange="simNum('amt',this)"> 원</label>`
+   :`<label class="slab">매달 <input class="sin" inputmode="numeric" value="${(SIM.mon||0).toLocaleString('ko-KR')}" onchange="simNum('mon',this)"> 원, 매월 <input class="sin sm" inputmode="numeric" value="${SIM.day}" onchange="simNum('day',this)"> 일</label>`}</div>
+  <div class="fq"><div class="fqt">계좌 종류 <span>분배금 세금이 달라요</span></div><div class="seg wrap">${b('acct','gen','일반계좌 (15.4% 떼고 재투자)')}${b('acct','tax','연금·ISA (세금 없이 재투자)')}</div></div>
+  <button class="sgo" onclick="simGo()" ${SIMBUSY||!SIM.codes.length?'disabled':''}>${SIMBUSY?'계산 중…':'계산하기'}</button>
+  ${out}
+  <div class="note">분배금은 분배락 3영업일 뒤(지급일 무렵) 종가로 다시 사고, 1주 단위로만 사며 남는 돈은 현금으로 들고 있다가 다음에 합쳐 사는 걸로 계산해요. 총보수는 가격에 이미 반영돼 있고, 매매수수료와 매매차익 세금은 빼지 않았어요. 과거 성과가 미래 수익을 보장하지 않으며 투자 권유가 아닙니다.</div>`;
 }
 const RANKS=[
  ['nightUp','🌙 마감 후 상승',x=>x.pct,1,x=>({})],
@@ -682,7 +857,8 @@ function render(){
   let h='';
   if(!META)h='<div class="empty">불러오는 중…</div>';
   else if(view.name==='fav')h=favView();
-  else if(view.name==='cats')h=catsView();
+  else if(view.name==='find'||view.name==='cats')h=findView();
+  else if(view.name==='sim')h=simView();
   else if(view.name==='cat')h=catView(view.key);
   else if(view.name==='rank')h=rankView();
   else if(view.name==='events')h=eventsView();
@@ -712,9 +888,9 @@ function render(){
 }
 let prev=null;
 let stack=[],scrolls=[];
-function go(t){view={name:t};stack=[];scrolls=[];pfForm=null;store.set('tab2',t);render();scrollTo(0,0)}
+function go(t){view={name:t};stack=[];scrolls=[];pfForm=null;store.set('tab2',t);render();scrollTo(0,0);if(t==='sim'&&META&&!SIMR&&!SIMBUSY&&SIM.codes.length)simGo()}
 function push(v){stack.push(view);scrolls.push(scrollY);view=v;try{history.pushState({d:stack.length},'')}catch(e){}render();scrollTo(0,0)}
-function openCat(k){push({name:'cat',key:k,tab:'cats'})}
+function openCat(k){push({name:'cat',key:k,tab:'find'})}
 function openD(code){push({name:'detail',code,tab:view.tab||view.name})}
 function popView(){if(!stack.length)return false;pfForm=null;view=stack.pop();const y=scrolls.pop()||0;render();scrollTo(0,y);return true}
 function back(){if(stack.length&&history.state&&history.state.d){history.back()}else if(!popView()){go('rank')}}
@@ -733,7 +909,7 @@ $('#q').addEventListener('input',e=>{
   box.style.display='block';
 });
 function pick(code){$('#q').value='';$('#res').style.display='none';openD(code)}
-document.addEventListener('click',e=>{if(!e.target.closest('.search'))$('#res').style.display='none'});
+document.addEventListener('click',e=>{if(!e.target.closest('.search')){$('#res').style.display='none';const p=$('#s_pick');if(p)p.style.display='none'}});
 function status(){if(META&&LIVEP&&LIVEP.n){$('#status').textContent='🟢 실시간';return}if(META){$('#status').textContent='🟢 실시간'}}
 (async()=>{
   render();
@@ -744,7 +920,8 @@ function status(){if(META&&LIVEP&&LIVEP.n){$('#status').textContent='🟢 실시
     if(!m){if(!META)$('#status').textContent='데이터를 불러오지 못했어요. 잠시 후 다시 열어주세요';return}
     META=m;LIST=(META.list||[]).map(x=>({code:x.c,name:x.n,price:x.p,cap:x.cap,ch:x.ch,amt:x.amt,fb:x.fb,fbd:x.fbd,est:x.est,pct:x.pct,pr:x.pr,w:x.w,cat:catOf(x.n)}));
     if(w)WH=w;DET={};for(const d of ds)if(d&&d.items)Object.assign(DET,d.items);DATA={};
-    applyWH();applyLive();status();if(!pfForm)render();
+    applyWH();applyLive();status();if(!pfForm&&!(document.activeElement&&document.activeElement.closest&&document.activeElement.closest('#main input')))render();
+    if(view.name==='sim'&&!SIMR&&!SIMBUSY&&SIM.codes.length)simGo();
   }
   await load();liveMkt();livePx();
   try{const q=new URLSearchParams(location.search).get('ev');if(q&&EVD&&EVD.ev.some(e=>e.id===q)){go('events');openEv(q)}}catch(e){}
