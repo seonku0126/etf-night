@@ -195,6 +195,15 @@ ${avg!=null?`<div class="card" style="text-align:center"><div class="sub">🌙 �
   urls.unshift(url);
 }
 // ---------- 일정 페이지 (/event/<id>/): 과거 같은 상황 통계, 검색 유입용 ----------
+// 이번 회차 핵심 (d가 다음 일정 날짜와 같을 때만 표시)
+const BRIEF = {
+  'nvda-earnings': { d: '2026-11-17', t: '3분기(2027 회계연도) 실적 · 한국시간 11월 18일(수) 새벽 6시 20분쯤 발표, 7시 컨퍼런스콜', pts: [
+    '회사 목표 매출 1,080억 달러(±2%), 매출총이익률 74%(±0.5%p)',
+    '시장 예상 매출 약 1,090억 달러, 주당순이익 2.49달러로 회사 목표(2.32~2.47달러)보다 높음',
+    '지난 분기 매출 962억 달러, 데이터센터 890억 달러(1년 전보다 117% 증가)',
+    '관건은 메모리 값 상승에 따른 마진 하락폭과 다음 분기 전망치',
+    '회사 전망에 중국 데이터센터 매출은 0으로 잡혀 있음'] },
+};
 {
   const evd = read('events.json');
   const kday = (d) => { const t = new Date(d + 'T12:00:00Z'); return `${t.getUTCFullYear()}년 ${t.getUTCMonth() + 1}월 ${t.getUTCDate()}일(${'일월화수목금토'[t.getUTCDay()]})`; };
@@ -205,27 +214,37 @@ ${avg!=null?`<div class="card" style="text-align:center"><div class="sub">🌙 �
     const t = `${e.seo}`;
     const desc = `${e.title} ${e.lab} ${e.assets[0][1]}는 과거 ${m.n}번 중 ${m.up}번 상승했어요(평균 ${sign(m.avg)}). ${e.next ? `다음 일정 ${kday(e.next)}.` : ''} 회차별 기록과 국내 ETF 반응까지 정리.`;
     const cards = e.assets.filter((a) => e.stats[a[0]]).map(([s, n, mk]) => { const x = e.stats[s]; return `<div class="card"><h2>${esc(n)}${mk === 'kr' ? ' <span class="sub">(한국장)</span>' : ''}</h2><p style="margin:0"><b style="font-size:22px">${x.up}/${x.n}번 상승</b> · 평균 <b class="${cls(x.avg)}">${sign(x.avg)}</b></p><p class="sub" style="margin:6px 0 0">평균 움직임 ±${x.abs.toFixed(1)}% · 최고 <span class="up">${sign(x.max)}</span>(${x.maxD}) · 최저 <span class="down">${sign(x.min)}</span>(${x.minD})</p></div>`; }).join('');
+    const br = BRIEF[e.id] && e.next === BRIEF[e.id].d ? BRIEF[e.id] : null;
+    const brHtml = br ? `<div class="card"><h2>이번 회차 핵심 (${kday(e.next)})</h2><p class="sub" style="margin:0 0 6px">${esc(br.t)}</p><ul style="margin:0;padding-left:18px">${br.pts.map((p) => `<li>${esc(p)}</li>`).join('')}</ul></div>` : '';
+    const faq = [];
+    if (e.next) faq.push([`${e.title} 다음 일정은 언제예요? 한국시간은?`, `${kday(e.next)} ${e.when}이에요. ${e.kst}.`]);
+    faq.push([`${e.title} 후 주가는 보통 올랐나요?`, `과거 ${m.n}번 중 ${e.lab} ${e.assets[0][1]}는 ${m.up}번 올랐고 평균 등락은 ${sign(m.avg)}였어요. 과거 통계일 뿐 앞으로도 같다는 보장은 없어요.`]);
+    const ld = [{ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }];
+    const faqLd = `<script type="application/ld+json">${JSON.stringify(ld[0]).replace(/</g, '\\u003c')}</script>`;
+    const faqHtml = `<div class="card"><h2>자주 묻는 질문</h2>${faq.map(([q, a]) => `<p style="margin:10px 0 2px"><b>Q. ${esc(q)}</b></p><p style="margin:0;color:#c9ced8">${esc(a)}</p>`).join('')}</div>`;
     const cols = e.assets.filter((a) => e.stats[a[0]]);
     const tbl = `<table><tr><td class="sub">날짜</td>${cols.map((a) => `<td class="sub" style="text-align:right">${esc(a[1].replace('TIGER ', ''))}</td>`).join('')}</tr>${e.rows.map((r) => `<tr><td>${r.d}</td>${cols.map((a) => `<td class="${cls(r.r[a[0]])}" style="text-align:right">${r.r[a[0]] == null ? '-' : sign(r.r[a[0]])}</td>`).join('')}</tr>`).join('')}</table>`;
     const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <title>${esc(t)} | 데이앤나잇 ETF</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${url}">
 <meta property="og:type" content="article"><meta property="og:title" content="${esc(t)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:image" content="${SITE}/og.png"><meta property="og:url" content="${url}"><meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="/icon.svg"><meta name="theme-color" content="#0f1115"><style>${CSS} table{font-size:13px}</style></head><body>
+<link rel="icon" href="/icon.svg"><meta name="theme-color" content="#0f1115">${faqLd}<style>${CSS} table{font-size:13px} li{margin:3px 0}</style></head><body>
 <a class="top" href="/"><img src="/icon.svg" alt="">데이앤나잇 ETF</a>
 <h1>${e.icon} ${esc(e.title)}: ${esc(e.lab)} 시장은 어떻게 움직였을까</h1>
 <div class="sub">${e.next ? `다음 일정 <b>${kday(e.next)}</b> · ${esc(e.when)} (${esc(e.kst)})` : '다음 일정 발표 전'}</div>
 <div class="card"><p style="margin:0;font-size:17px">과거 <b>${m.n}번</b> 중 ${esc(e.lab)} ${esc(e.assets[0][1])}는 <b class="up">${m.up}번 상승</b>, <b class="down">${m.n - m.up}번 하락</b>했어요. 평균 등락은 <b class="${cls(m.avg)}">${sign(m.avg)}</b>, 평균 움직임 폭은 ±${m.abs.toFixed(1)}%예요.</p><p class="sub" style="margin:8px 0 0">${esc(e.desc)}</p></div>
-${cards}
+${brHtml}${cards}
 <a class="cta" href="/?ev=${e.id}">앱 화면으로 보기 · 실시간 밤 시세 →</a>
+${faqHtml}
 <div class="card"><h2>회차별 기록</h2>${tbl}</div>
+<div class="card rel"><h2>함께 보면 좋은 일정</h2><a href="/guide/us-cpi-schedule/">CPI·FOMC 한국시간</a><a href="/guide/us-holidays/">미국 증시 휴장일</a><a href="/guide/suneung-market-hours/">수능날 증시 시간</a><a href="/guide/us-market-hours/">미국 증시 한국 시간</a></div>
 <p class="note">과거 통계일 뿐 앞으로도 같다는 보장은 없으며 투자 권유가 아닙니다. 미국 지수 종가 기준, 한국 ETF는 발표 다음 날 아침 시작한 거래일 기준이며 상장 이후 기록만 포함합니다. <a href="/night/">오늘 밤 해외 ETF 시황</a> · <a href="/guide/">가이드</a></p></body></html>`;
     fs.mkdirSync(path.join(siteDir, 'event', e.id), { recursive: true });
     fs.writeFileSync(path.join(siteDir, 'event', e.id, 'index.html'), html);
     urls.unshift(url); evLinks.push(`<a href="/event/${e.id}/">${esc(e.title)}</a>`);
   }
 }
-for (const g of ['','inav','night-price','us-market-hours','premium-discount','hedged','futures']) urls.push(`${SITE}/guide/${g}${g?'/':''}`);
+for (const g of ['','inav','night-price','us-market-hours','premium-discount','hedged','futures','suneung-market-hours','us-holidays','us-cpi-schedule']) urls.push(`${SITE}/guide/${g}${g?'/':''}`);
 
 const today = atKst.toISOString().slice(0, 10);
 fs.writeFileSync(path.join(siteDir, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
