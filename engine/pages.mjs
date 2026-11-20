@@ -160,6 +160,63 @@ ${avg!=null?`<div class="card" style="text-align:center"><div class="sub">🌙 �
   fs.writeFileSync(path.join(siteDir,'c',c[0],'index.html'),html);
   urls.push(url);
 }
+// ---------- ETF 비교 페이지 (/vs/<A>-<B>/): "A vs B" 검색 유입용 ----------
+const vsOf = {};
+{
+  const LEV = /레버리지|인버스|2X|곱버스|합성/i;
+  const short = (n) => n.replace(/\(.*?\)/g, '').trim();
+  for (const k of ['nasdaq100', 'sp500', 'semiconductor', 'dividend', 'covered-call']) {
+    const c = CATS.find((x) => x[0] === k);
+    const xs = list.filter((x) => catOf(x.n) === c && !LEV.test(x.n)).sort((a, b) => (b.cap || 0) - (a.cap || 0)).slice(0, 5);
+    for (let i = 0; i < xs.length; i++) for (let j = i + 1; j < xs.length; j++) {
+      const [a, b] = [xs[i], xs[j]], da = det[a.c] || {}, db = det[b.c] || {};
+      const slug = `${a.c}-${b.c}`, url = `${SITE}/vs/${slug}/`;
+      const ta = (da.top || []), tb = (db.top || []);
+      const mb = Object.fromEntries(tb.map((t) => [t.t, t.w]));
+      const common = ta.filter((t) => mb[t.t] != null).map((t) => ({ n: t.n || t.t, a: t.w, b: mb[t.t] }));
+      const hed = (d) => (d.hedged == null ? '-' : d.hedged ? '환헤지(H)' : '환노출');
+      const rowsT = [
+        ['오늘 종가', won(a.p), won(b.p)],
+        ['오늘 등락', sign(a.ch), sign(b.ch)],
+        ['밤 예상 등락', a.est != null ? sign(a.pct) : '-', b.est != null ? sign(b.pct) : '-'],
+        ['시가총액', eok(a.cap), eok(b.cap)],
+        ['거래대금', eok((a.amt || 0) / 100), eok((b.amt || 0) / 100)],
+        ['환율', hed(da), hed(db)],
+        ['보유 종목 수', da.nHold ? da.nHold + '개' : '-', db.nHold ? db.nHold + '개' : '-'],
+      ];
+      const bigger = (a.cap || 0) >= (b.cap || 0) ? a : b, liq = (a.amt || 0) >= (b.amt || 0) ? a : b;
+      const sum = `시가총액은 <b>${esc(short(bigger.n))}</b>가 더 크고, 오늘 거래대금은 <b>${esc(short(liq.n))}</b>가 더 많아요.${da.hedged != null && db.hedged != null && da.hedged !== db.hedged ? ' 한쪽은 환헤지, 한쪽은 환노출이라 원/달러 환율이 움직일 때 수익률 차이가 커질 수 있어요.' : ' 둘 다 같은 지수·테마를 따라가서 수익률은 대체로 비슷하고, 보수와 거래량(호가 촘촘함)에서 차이가 나요.'}`;
+      const t = `${short(a.n)} vs ${short(b.n)} 비교 — 시가총액·거래대금·구성종목·밤 예상가`;
+      const desc = `${a.n}와 ${b.n}를 비교했어요. 종가 ${won(a.p)} vs ${won(b.p)}, 시가총액 ${eok(a.cap)} vs ${eok(b.cap)}, 거래대금, 환헤지 여부, 많이 담은 종목과 밤사이 예상 등락까지.`;
+      const faq = [[`${short(a.n)}와 ${short(b.n)} 차이가 뭐예요?`, sum.replace(/<[^>]+>/g, '')], [`${short(a.n)}와 ${short(b.n)} 중 뭐가 더 커요?`, `${atTxt} 기준 시가총액은 ${short(a.n)} ${eok(a.cap)}, ${short(b.n)} ${eok(b.cap)}예요.`]];
+      const ld = `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map(([q, an]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: an } })) }).replace(/</g, '\\u003c')}</script>`;
+      const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<title>${esc(t)} | 데이앤나잇 ETF</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${url}">
+<meta property="og:title" content="${esc(short(a.n))} vs ${esc(short(b.n))} 비교"><meta property="og:description" content="${esc(desc)}"><meta property="og:image" content="${SITE}/og.png"><meta property="og:url" content="${url}"><meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/icon.svg"><meta name="theme-color" content="#0f1115">${ld}<style>${CSS} td{vertical-align:top} td:nth-child(2),td:nth-child(3){text-align:right;width:30%}</style></head><body>
+<a class="top" href="/"><img src="/icon.svg" alt="">데이앤나잇 ETF</a>
+<h1>${esc(short(a.n))} vs ${esc(short(b.n))}</h1><div class="sub">${esc(c[1])} ETF 비교 · ${atTxt} 기준</div>
+<div class="card"><p style="margin:0">${sum}</p></div>
+<div class="card"><table><tr><td></td><td><a href="/etf/${a.c}/">${esc(short(a.n))}</a></td><td><a href="/etf/${b.c}/">${esc(short(b.n))}</a></td></tr>${rowsT.map((r) => `<tr><td class="sub">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</table></div>
+${common.length ? `<div class="card"><h2>둘 다 많이 담은 종목</h2><table>${common.map((x) => `<tr><td>${esc(x.n)}</td><td>${x.a}%</td><td>${x.b}%</td></tr>`).join('')}</table></div>` : ''}
+${ta.length || tb.length ? `<div class="card"><h2>많이 담은 종목</h2><div class="kv"><div><span>${esc(short(a.n))}</span>${ta.slice(0, 5).map((x) => `${esc(x.n || x.t)} ${x.w}%`).join('<br>')}</div><div><span>${esc(short(b.n))}</span>${tb.slice(0, 5).map((x) => `${esc(x.n || x.t)} ${x.w}%`).join('<br>')}</div></div></div>` : ''}
+<a class="cta" href="/">실시간 밤 예상 가격 보기 →</a>
+<div class="card"><h2>자주 묻는 질문</h2>${faq.map(([q, an]) => `<p style="margin:10px 0 2px"><b>Q. ${esc(q)}</b></p><p style="margin:0;color:#c9ced8">${esc(an)}</p>`).join('')}</div>
+<div class="card rel"><h2>같은 분류 더 보기</h2><a href="/c/${k}/">${esc(c[1])} ETF 전체 비교</a></div>
+<p class="note">정보 제공 목적이며 특정 상품을 권하지 않습니다. 총보수는 운용사 공시를 확인하세요. 밤 예상 등락은 추정치입니다. <a href="/guide/">가이드</a></p></body></html>`;
+      fs.mkdirSync(path.join(siteDir, 'vs', slug), { recursive: true });
+      fs.writeFileSync(path.join(siteDir, 'vs', slug, 'index.html'), html);
+      urls.push(url);
+      (vsOf[a.c] = vsOf[a.c] || []).push([slug, b.n]); (vsOf[b.c] = vsOf[b.c] || []).push([slug, a.n]);
+    }
+  }
+  // 개별 ETF 페이지에 비교 링크 넣기
+  for (const [code, arr] of Object.entries(vsOf)) {
+    const f = path.join(siteDir, 'etf', code, 'index.html');
+    try { const h = fs.readFileSync(f, 'utf8'); fs.writeFileSync(f, h.replace('<div class="card rel"><h2>분류별 보기</h2>', `<div class="card rel"><h2>비교해 보기</h2>${arr.map(([s, n]) => `<a href="/vs/${s}/">vs ${esc(short(n))}</a>`).join('')}</div><div class="card rel"><h2>분류별 보기</h2>`)); } catch (e) {}
+  }
+}
 // ---------- 오늘 밤 시황 (매 갱신마다 새로 씀) ----------
 {
   const M = atKst.getUTCMonth() + 1, D = atKst.getUTCDate(), H = atKst.getUTCHours();
