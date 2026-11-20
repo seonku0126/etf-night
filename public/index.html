@@ -583,7 +583,7 @@ function pfChip(){
   return `<button class="pfbtn" onclick="openPF()">${t}</button>`}
 function openPF(){pfForm=null;push({name:'pf',tab:'pf'})}
 // ---------- 화면 ----------
-function favView(){return (favs.length?favs.map(c=>(load(c),card(c))).join(''):'<div class="empty">ETF를 검색하거나 찾기 탭에서 골라 담아보세요</div>')+adSlot()}
+function favView(){return (favs.length?favs.map(c=>(load(c),card(c))).join(''):'<div class="empty">ETF를 검색하거나 찾기 탭에서 골라 담아보세요</div>')}
 function catsView(){
   const g={};for(const x of LIST)(g[x.cat]=g[x.cat]||[]).push(x);
   return `<div class="note">분류를 누르면 시가총액 순으로 쭉 볼 수 있어요</div><div class="grid">`+CATS.filter(c=>g[c[0]]).map(([k,n])=>{
@@ -771,7 +771,7 @@ function rankView(){
   const fbd=(LIST.find(x=>x.fbd)||{}).fbd;
   const note={nightUp:'한국 장 마감 뒤 지금까지 오른 순 (마감 iNAV 대비)',nightDown:'한국 장 마감 뒤 지금까지 내린 순 (마감 iNAV 대비)',amt:'오늘 한국 장 거래대금',fbuy:`외국인 순매수 금액 (${fbd?fbd.slice(4,6)+'/'+fbd.slice(6):''} 기준)`,fsell:`외국인 순매도 금액 (${fbd?fbd.slice(4,6)+'/'+fbd.slice(6):''} 기준)`,todayUp:'오늘 한국 장 등락률',todayDown:'오늘 한국 장 등락률'}[k];
   const seg=RANKS.map(r=>`<button class="${rankKey===r[0]?'on':''}" onclick="rankKey='${r[0]}';render()">${r[1]}</button>`).join('');
-  return `${mktDash()}${nightBanner()}${evStrip()}${homeAd()}<div class="seg">${seg}</div><div class="note">${note} · 상위 ${xs.length}개</div><div class="list">${xs.map((x,i)=>li(x,i,right(x))).join('')||'<div class="empty">데이터가 없어요</div>'}</div>${adSlot()}${fbBox()}`;
+  return `${mktDash()}${nightBanner()}${evStrip()}<div class="seg">${seg}</div><div class="note">${note} · 상위 ${xs.length}개</div><div class="list">${xs.map((x,i)=>li(x,i,right(x))).join('')||'<div class="empty">데이터가 없어요</div>'}</div>${fbBox()}`;
 }
 function card(code){
   const d=DATA[code],m=LIST.find(x=>x.code===code)||{};
