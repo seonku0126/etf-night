@@ -24,9 +24,14 @@ async function cached(env, key, ttlSec, fn) {
   return v;
 }
 
+// FunETF는 요청이 몰리면 429(너무 많은 요청)를 줌 → 한 번에 하나씩, 1.2초 간격으로만 요청
+let funGate = Promise.resolve();
+const funTurn = () => { const p = funGate.then(() => new Promise((ok) => setTimeout(ok, 1200))); funGate = p; return p; };
 async function getText(url, opt = {}) {
+  const fun = url.includes('funetf.co.kr');
+  if (fun) await funTurn();
   let r = await fetch(url, { headers: { ...UA, ...(opt.headers || {}) } });
-  for (const wait of [1500, 4000, 8000]) {
+  for (const wait of fun ? [6000, 15000] : [1500, 4000, 8000]) {
     if (r.status !== 429 && r.status < 500) break;
     await new Promise((ok) => setTimeout(ok, wait));
     r = await fetch(url, { headers: { ...UA, ...(opt.headers || {}) } });
