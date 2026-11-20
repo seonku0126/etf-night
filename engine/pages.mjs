@@ -155,7 +155,7 @@ ${avg!=null?`<div class="card" style="text-align:center"><div class="sub">🌙 �
 <div class="card"><table>${rows}</table></div>
 <a class="cta" href="/">실시간 순위 보기 →</a>
 <div class="card rel"><h2>다른 분류</h2>${catLinks}</div>
-<p class="note">시가총액 순 정렬 · 마감 후 등락은 마감 iNAV 대비 추정치이며 투자 권유가 아닙니다. <a href="/guide/inav/">iNAV가 뭔가요?</a></p></body></html>`;
+<p class="note">${c[0]==='leverage'?'<a href="/guide/leverage-decay/">레버리지 ETF 음의 복리란?</a> · ':''}${c[0]==='covered-call'?'<a href="/guide/covered-call/">커버드콜 ETF 원리</a> · ':''}<a href="/guide/domestic-vs-direct/">국내 상장 vs 미국 직투</a> · 시가총액 순 정렬 · 마감 후 등락은 마감 iNAV 대비 추정치이며 투자 권유가 아닙니다. <a href="/guide/inav/">iNAV가 뭔가요?</a></p></body></html>`;
   fs.mkdirSync(path.join(siteDir,'c',c[0]),{recursive:true});
   fs.writeFileSync(path.join(siteDir,'c',c[0],'index.html'),html);
   urls.push(url);
@@ -304,7 +304,7 @@ ${faqHtml}
     urls.unshift(url); evLinks.push(`<a href="/event/${e.id}/">${esc(e.title)}</a>`);
   }
 }
-for (const g of ['','inav','night-price','us-market-hours','premium-discount','hedged','futures','suneung-market-hours','us-holidays','us-cpi-schedule','anthropic-ipo']) urls.push(`${SITE}/guide/${g}${g?'/':''}`);
+for (const g of ['','inav','night-price','us-market-hours','premium-discount','hedged','futures','suneung-market-hours','us-holidays','us-cpi-schedule','anthropic-ipo','leverage-decay','covered-call','domestic-vs-direct']) urls.push(`${SITE}/guide/${g}${g?'/':''}`);
 
 const today = atKst.toISOString().slice(0, 10);
 fs.writeFileSync(path.join(siteDir, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
