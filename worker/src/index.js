@@ -101,6 +101,35 @@ async function krpx(codes) {
   }
   return q;
 }
+// /sync: 보유 ETF 동기화 (6자리 숫자 코드, 가입 없음). KV 's:<코드>' 1년 보관, 쓸 때마다 연장
+async function sync(req, env, cors) {
+  const J = (o, st = 200) => new Response(JSON.stringify(o), { status: st, headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+  if (!env.FB) return J({ error: 'off' }, 503);
+  const ip = req.headers.get('cf-connecting-ip') || '0', url = new URL(req.url);
+  const TTL = 60 * 60 * 24 * 365;
+  const clean = (b) => { const items = (Array.isArray(b.items) ? b.items : []).slice(0, 50).map((x) => ({ code: String(x.code || '').slice(0, 6).toUpperCase(), qty: +x.qty || 0, avg: +x.avg || 0 })).filter((x) => /^[0-9A-Z]{6}$/.test(x.code) && x.qty > 0); return { items, cash: Math.max(0, +b.cash || 0), u: Date.now() }; };
+  let b = {}; if (req.method !== 'GET') { try { b = await req.json(); } catch (e) {} }
+  if (url.pathname === '/sync/new' && req.method === 'POST') {
+    const nk = 'n:' + ip, n = +(await env.FB.get(nk)) || 0; if (n >= 5) return J({ error: 'slow' }, 429);
+    await env.FB.put(nk, String(n + 1), { expirationTtl: 3600 });
+    for (let i = 0; i < 8; i++) {
+      const code = String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
+      if (await env.FB.get('s:' + code)) continue;
+      const d = clean(b); await env.FB.put('s:' + code, JSON.stringify(d), { expirationTtl: TTL });
+      return J({ code, u: d.u });
+    }
+    return J({ error: 'busy' }, 503);
+  }
+  const code = url.pathname.split('/')[2] || '';
+  if (!/^\d{6}$/.test(code)) return J({ error: 'code' }, 400);
+  const fk = 'f:' + ip, fails = +(await env.FB.get(fk)) || 0; if (fails >= 10) return J({ error: 'slow' }, 429);
+  const cur = await env.FB.get('s:' + code);
+  if (!cur) { await env.FB.put(fk, String(fails + 1), { expirationTtl: 3600 }); return J({ error: 'none' }, 404); }
+  if (req.method === 'GET') return J(JSON.parse(cur));
+  if (req.method === 'PUT') { const d = clean(b); await env.FB.put('s:' + code, JSON.stringify(d), { expirationTtl: TTL }); return J({ ok: 1, u: d.u }); }
+  if (req.method === 'DELETE') { await env.FB.delete('s:' + code); return J({ ok: 1 }); }
+  return J({ error: 'method' }, 405);
+}
 // /fb: 의견 받기 (KV 저장). 목록은 FB_KEY가 있어야 볼 수 있음
 async function fb(req, env, cors) {
   const J = (o, st = 200) => new Response(JSON.stringify(o), { status: st, headers: { ...cors, 'Content-Type': 'application/json' } });
@@ -128,9 +157,10 @@ export default {
   async fetch(req, env, ctx) {
     const o = req.headers.get('Origin') || '';
     const cors = { 'Access-Control-Allow-Origin': ORIGINS.includes(o) ? o : ORIGINS[0], Vary: 'Origin' };
-    if (req.method === 'OPTIONS') return new Response(null, { headers: { ...cors, 'Access-Control-Allow-Methods': 'GET, POST', 'Access-Control-Allow-Headers': 'Content-Type' } });
+    if (req.method === 'OPTIONS') return new Response(null, { headers: { ...cors, 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE', 'Access-Control-Allow-Headers': 'Content-Type' } });
     const url = new URL(req.url);
     if (url.pathname.startsWith('/fb')) return fb(req, env, cors);
+    if (url.pathname.startsWith('/sync')) return sync(req, env, cors);
     if (url.pathname === '/hist') {
       const c = (url.searchParams.get('c') || '').toUpperCase();
       const J = (o, st, cc) => new Response(JSON.stringify(o), { status: st, headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': cc } });

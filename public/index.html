@@ -525,7 +525,7 @@ let PF=store.get('pf',{items:[],cash:0}),pfDoc=null,pfSaving=Promise.resolve(),p
 const PAL=['#f5c542','#5ab0ff','#ff7a7a','#7ee2a8','#c39bff','#ffa25c','#5fd4d4','#e58ad8','#9aa3b2'];
 const sw=v=>(v>0?'+':v<0?'−':'')+Math.abs(Math.round(v)).toLocaleString('ko-KR')+'원';
 function priceNow(code){const m=M(code);return m.est!=null?{px:m.est,src:'밤 추정'}:{px:m.price,src:'종가'}}
-function persist(){store.set('pf',PF);if(pfDoc){const data={items:PF.items,cash:+PF.cash||0,updatedAt:new Date().toISOString()};pfSaving=pfSaving.then(()=>pfDoc.set(data)).catch(()=>{pfDoc=null})}}
+function persist(){PF.u=Date.now();store.set('pf',PF);syncPush();if(pfDoc){const data={items:PF.items,cash:+PF.cash||0,updatedAt:new Date().toISOString()};pfSaving=pfSaving.then(()=>pfDoc.set(data)).catch(()=>{pfDoc=null})}}
 function pfView(){
   if(pfForm)return formView();
   const rows=PF.items.map((it,i)=>{const m=M(it.code),pn=priceNow(it.code),px=pn.px||it.avg,last=(m.price||px);
@@ -555,7 +555,8 @@ function pfView(){
   return ub+sum+list+`
     <button class="btn" onclick="openForm(null)">+ 종목 추가</button>
     ${rows.length?`<div style="display:flex;gap:8px;margin-top:8px"><button class="btn" style="flex:1;margin:0" onclick="pfShareImg(true)">↗ % 만 공유</button><button class="btn" style="flex:1;margin:0" onclick="pfShareImg(false)">↗ 금액까지 공유</button></div>`:''}
-    <div class="note" style="margin-top:10px">${META?'밤 추정 '+hm(META.at)+' 기준 · ':''}5분마다 새로 불러와요. 가격은 밤 추정값(시가총액 상위 150개) 또는 마지막 종가를 써요. 이 기기 브라우저에만 저장되고, 다른 사람에게는 이 칸이 보이지 않아요.</div>`;
+    ${syncBox()}
+    <div class="note" style="margin-top:10px">${META?'밤 추정 '+hm(META.at)+' 기준 · ':''}5분마다 새로 불러와요. 가격은 밤 추정값(시가총액 상위 150개) 또는 마지막 종가를 써요. 이 기기 브라우저에 저장되고, 동기화 코드를 만들면 코드와 함께 서버에도 저장돼요.</div>`;
 }
 function formView(){
   if(pfForm.mode==='cash')return `<div class="form"><b>예수금</b><label>금액(원)</label><input id="f_cash" type="number" inputmode="numeric" value="${PF.cash||''}">
@@ -638,6 +639,20 @@ function antCard(){if(Date.now()>Date.parse('2027-02-10'))return'';const q=MKT&&
   <ul><li>2026년 11월 19일(목) 나스닥 글로벌 셀렉트 시장 상장 · 티커 <b>ANT</b></li><li>공모가는 18일 밤(미국) 결정 · 대표 주관사 골드만삭스·모건스탠리</li><li>미국 2배 레버리지 ETF(디렉시온)도 상장 다음 거래일부터 거래 예정</li>
   <li>보호예수(락업) 해제가 여러 번에 나눠 풀려요: <b>12/15 → 1/5 → 1/19 → 2/2</b> (공모가 결정일 기준 예상) · 풀리는 날 물량 부담 주의</li></ul>
   <div class="meta" style="margin:8px 0 0">AI·나스닥 ETF 흐름에 영향을 줄 수 있어요. 투자 권유가 아닙니다.</div></div>`}
+
+// ---------- 동기화 코드 (6자리, 가입 없음) ----------
+const SYURL='https://etf-night-mkt.seonku0126.workers.dev/sync';let SYC=store.get('pfsync',''),syT=null,syMsg='',syIn=false;
+function syncPush(){if(!SYC)return;clearTimeout(syT);syT=setTimeout(()=>fetch(SYURL+'/'+SYC,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:PF.items,cash:+PF.cash||0})}).catch(()=>{}),2000)}
+async function syncPull(){if(!SYC)return;try{const r=await fetch(SYURL+'/'+SYC,{cache:'no-store'});if(r.status===404){SYC='';store.set('pfsync','');return}if(!r.ok)return;const d=await r.json();if(d.u>(PF.u||0)){PF={items:d.items||[],cash:d.cash||0,u:d.u};store.set('pf',PF);render()}}catch(e){}}
+setTimeout(syncPull,1500);document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncPull()});
+async function syncNew(){syMsg='만드는 중…';render();try{const r=await fetch(SYURL+'/new',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:PF.items,cash:+PF.cash||0})});const d=await r.json();if(d.code){SYC=d.code;store.set('pfsync',SYC);PF.u=d.u;store.set('pf',PF);syMsg=''}else syMsg=d.error==='slow'?'잠시 후 다시 해주세요':'만들지 못했어요'}catch(e){syMsg='연결이 안 돼요'}render()}
+async function syncJoin(){const c=($('#sy_in').value||'').replace(/\D/g,'');if(c.length!==6){syMsg='6자리 숫자를 넣어주세요';render();return}
+  try{const r=await fetch(SYURL+'/'+c,{cache:'no-store'});const d=await r.json();if(r.ok&&d.items){if(PF.items.length&&!confirm('이 기기의 보유 목록을 코드의 목록으로 바꿀까요?'))return;SYC=c;store.set('pfsync',c);PF={items:d.items,cash:d.cash||0,u:d.u};store.set('pf',PF);syMsg='';syIn=false}else syMsg=d.error==='slow'?'너무 많이 시도했어요. 1시간 뒤에 다시 해주세요':'없는 코드예요'}catch(e){syMsg='연결이 안 돼요'}render()}
+function syncOff(){if(!confirm('이 기기에서 동기화를 끊을까요? (보유 목록은 이 기기에 그대로 남아요)'))return;SYC='';store.set('pfsync','');render()}
+function syncBox(){const m=syMsg?`<div class="meta" style="color:var(--acc)">${esc(syMsg)}</div>`:'';
+  if(SYC)return `<div class="card"><div class="meta" style="margin-top:0">🔄 동기화 코드</div><div style="font-size:30px;font-weight:800;letter-spacing:6px">${SYC.slice(0,3)} ${SYC.slice(3)}</div><div class="meta">다른 기기나 나중에 이 코드를 넣으면 보유 목록을 그대로 불러와요. 바꾸면 자동 저장돼요. 코드는 남에게 알려주지 마세요.</div>${m}<button class="btn" style="margin-top:8px;background:var(--line);color:var(--ink)" onclick="syncOff()">이 기기에서 동기화 끊기</button></div>`;
+  if(syIn)return `<div class="card"><div class="meta" style="margin-top:0">🔄 코드로 불러오기</div><input id="sy_in" inputmode="numeric" maxlength="7" placeholder="6자리 숫자" style="width:100%;font-size:22px;letter-spacing:4px;padding:10px;border-radius:10px;border:1px solid var(--line);background:#13161c;color:var(--ink)">${m}<div style="display:flex;gap:8px;margin-top:8px"><button class="btn" style="flex:1;margin:0;background:var(--line);color:var(--ink)" onclick="syIn=false;syMsg='';render()">취소</button><button class="btn" style="flex:1;margin:0" onclick="syncJoin()">불러오기</button></div></div>`;
+  return `<div class="card"><div class="meta" style="margin-top:0">🔄 기기를 바꿔도 그대로 — 가입 없이 6자리 코드로 저장</div>${m}<div style="display:flex;gap:8px;margin-top:8px">${PF.items.length?`<button class="btn" style="flex:1;margin:0" onclick="syncNew()">코드 만들기</button>`:''}<button class="btn" style="flex:1;margin:0;background:var(--line);color:var(--ink)" onclick="syIn=true;syMsg='';render()">코드로 불러오기</button></div></div>`}
 
 function pfChip(){
   if(view.name==='pf'||!PF.items.length)return '';
