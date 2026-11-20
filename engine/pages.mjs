@@ -191,7 +191,10 @@ ${avg!=null?`<div class="card" style="text-align:center"><div class="sub">🌙 �
 <div class="card rel"><h2>분류별 보기</h2>${catLinks}</div>
 <p class="note">마감 iNAV, 구성종목 비중, 미국 시세, 원/달러 환율로 계산한 추정치이며 투자 권유가 아닙니다. 미국 정규장이 닫혀 있을 때는 지수 선물 움직임을 반영합니다. 밤 추정은 시가총액 상위 150개 대상. <a href="/guide/night-price/">밤에 ETF 가격 보는 법</a> · <a href="/guide/">가이드</a></p></body></html>`;
   fs.mkdirSync(path.join(siteDir, 'night'), { recursive: true });
-  fs.writeFileSync(path.join(siteDir, 'night', 'index.html'), html);
+  const arch = fs.readdirSync(path.join(siteDir, 'night')).filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort().reverse();
+  const archHtml = arch.length ? `<div class="card rel"><h2>지난 아침 시황</h2>${arch.slice(0, 30).map((d) => `<a href="/night/${d}/">${+d.slice(5, 7)}월 ${+d.slice(8)}일</a>`).join('')}</div>` : '';
+  fs.writeFileSync(path.join(siteDir, 'night', 'index.html'), html.replace('<div class="card rel"><h2>분류별 보기</h2>', archHtml + '<div class="card rel"><h2>분류별 보기</h2>'));
+  for (const d of arch) urls.push(`${SITE}/night/${d}/`);
   urls.unshift(url);
 }
 // ---------- 일정 페이지 (/event/<id>/): 과거 같은 상황 통계, 검색 유입용 ----------
