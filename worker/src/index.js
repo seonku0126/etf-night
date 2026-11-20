@@ -3,7 +3,7 @@ const SYMS = {
   'NQ=F': '나스닥100 선물', 'ES=F': 'S&P500 선물', 'YM=F': '다우 선물', '^SOX': '필라델피아 반도체',
   'KRW=X': '원/달러', '^VIX': 'VIX 공포지수', '^TNX': '미 10년물 금리', 'GC=F': '금', 'CL=F': 'WTI 원유', 'BTC-USD': '비트코인',
   NVDA: '엔비디아', AAPL: '애플', MSFT: '마이크로소프트', AMZN: '아마존', GOOGL: '알파벳', META: '메타', TSLA: '테슬라', AVGO: '브로드컴',
-  AMD: 'AMD', PLTR: '팔란티어', TSM: 'TSMC', MU: '마이크론',
+  AMD: 'AMD', PLTR: '팔란티어', TSM: 'TSMC', MU: '마이크론', ANT: '앤트로픽',
 };
 const ORIGINS = ['https://daynnightetf.com', 'https://www.daynnightetf.com'];
 async function spark(list) {
