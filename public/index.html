@@ -710,7 +710,7 @@ function findView(){
 
 // ---------- 투자 시뮬레이터 (항상 분배금 재투자 기준) ----------
 const HIST='https://etf-night-mkt.seonku0126.workers.dev/hist?c=',SIMC=['#f5c542','#ff5a5f','#4e8cff','#2ee59d'];
-let SIM=Object.assign({codes:['133690','143850'],per:'10',from:'',mode:'lump',amt:10000000,mon:500000,day:25,acct:'gen'},store.get('sim',{}));
+let SIM=Object.assign({codes:['133690','143850'],per:'10',from:'',mode:'lump',amt:10000000,mon:500000,day:25,freq:'m',dmon:20000,acct:'gen'},store.get('sim',{}));
 let SIMR=null,SIMBUSY=false,SIMERR='';const HC={};
 function simSave(){store.set('sim',SIM)}
 function simAdd(code,e){if(e)e.stopPropagation();if(SIM.codes.includes(code)){SIM.codes=SIM.codes.filter(c=>c!==code)}else{if(SIM.codes.length>=4){toast('최대 4개까지 비교할 수 있어요');return}SIM.codes=[...SIM.codes,code];toast('시뮬레이터에 담았어요')}SIMR=null;simSave();render()}
@@ -745,6 +745,7 @@ function simCalc(h,start,o){
     for(let k=fpend.length-1;k>=0;k--)if(fpend[k][0]===i){f+=fpend[k][1]/p[i];fpend.splice(k,1)}
     const di=(ymdD(t[i])-d0)/864e5;
     if(i===i0){const a=o.mode==='lump'?o.amt:o.mon;cash+=a;prin+=a;flows.push([0,-a])}
+    else if(o.mode==='dca'&&o.freq==='d'){cash+=o.mon;prin+=o.mon;flows.push([di,-o.mon])}
     else if(o.mode==='dca'&&ymdD(t[i])>=nm){cash+=o.mon;prin+=o.mon;flows.push([di,-o.mon]);nm=new Date(Date.UTC(nm.getUTCFullYear(),nm.getUTCMonth()+1,day));while(ymdD(t[i])>=nm)nm=new Date(Date.UTC(nm.getUTCFullYear(),nm.getUTCMonth()+1,day))}
     const n=Math.floor(cash/p[i]);if(n>0){sh+=n;cash-=n*p[i]}
     const pend$=pend.reduce((s,x)=>s+x[1],0),v=sh*p[i]+cash+pend$;
@@ -768,7 +769,7 @@ async function simGo(){
     if(!ok.length){SIMERR='과거 시세를 불러오지 못했어요. 잠시 후 다시 시도해 주세요';return}
     const want=simStart(),firsts=ok.map(([c,h])=>[c,h.t[0]]),late=firsts.reduce((a,b)=>b[1]>a[1]?b:a);
     const start=Math.max(want,late[1]);
-    const o={mode:SIM.mode,amt:SIM.amt||0,mon:SIM.mon||0,day:SIM.day,acct:SIM.acct};
+    const fr=SIM.freq==='d'?'d':'m',o={mode:SIM.mode,amt:SIM.amt||0,mon:(fr==='d'?SIM.dmon:SIM.mon)||0,freq:fr,day:SIM.day,acct:SIM.acct};
     if((o.mode==='lump'&&!o.amt)||(o.mode==='dca'&&!o.mon)){SIMERR='투자 금액을 입력해 주세요';return}
     const rs=ok.map(([c,h])=>({c,name:(M(c)||{}).name||h.n||c,col:SIMC[SIM.codes.indexOf(c)],r:simCalc(h,start,o)})).filter(x=>x.r);
     SIMR={rs,want,start,late:start>want&&want>0?late:null,bad,o};
@@ -801,7 +802,7 @@ function simHover(e){const c=window._SC,tip=$('#s_tip'),vl=$('#s_vl');if(!c||!ti
   tip.innerHTML=`<b>${ymdS(c.dates[i])}</b>`+c.lines.map((l,k)=>l[i]?`<div><i style="background:${c.rs[k].col}"></i>${krw(l[i][1])}</div>`:'').join('')+`<div class="m">원금 ${krw(c.prin[i])}</div>`;
   tip.style.display='block';const px=c.X(i)/c.W*bx.width;tip.style.left=(px>bx.width/2?px-tip.offsetWidth-10:px+10)+'px'}
 function simShare(){if(!SIMR||!SIMR.rs.length)return;const o=SIMR.o,best=SIMR.rs.slice().sort((a,b)=>b.r.val-a.r.val)[0],r=best.r;
-  const yr=Math.round(r.yrs);const text=`📈 ${yr}년 전 ${o.mode==='lump'?krw(o.amt)+'을':'매달 '+krw(o.mon)+'씩'} ${best.name}에 넣었다면 지금 ${krw(r.val)} (${(r.ret*100>0?'+':'')+(r.ret*100).toFixed(1)}%, 분배금 재투자)`;
+  const yr=Math.round(r.yrs);const text=`📈 ${yr}년 전 ${o.mode==='lump'?krw(o.amt)+'을':(o.freq==='d'?'매일 ':'매달 ')+krw(o.mon)+'씩'} ${best.name}에 넣었다면 지금 ${krw(r.val)} (${(r.ret*100>0?'+':'')+(r.ret*100).toFixed(1)}%, 분배금 재투자)`;
   const url='https://daynnightetf.com/';if(navigator.share)navigator.share({text,url}).catch(()=>{});else navigator.clipboard&&navigator.clipboard.writeText(text+' '+url).then(()=>toast('결과를 복사했어요'))}
 function simView(){
   const b=(k,v,n)=>`<button class="${SIM[k]===v?'on':''}" onclick="simOpt('${k}','${v}')">${n}</button>`;
@@ -812,7 +813,7 @@ function simView(){
   else if(SIMR&&SIMR.rs.length){
     const o=SIMR.o,rs=SIMR.rs.slice().sort((a,b)=>b.r.val-a.r.val),r0=rs[0].r;
     const pct=v=>v==null?'-':(v>0?'+':'')+(v*100).toFixed(1)+'%';
-    out=`<div class="sbox"><div class="meta" style="margin:0">${ymdS(r0.start)} ~ ${ymdS(r0.end)} (${r0.yrs.toFixed(1)}년) · ${o.mode==='lump'?'한 번에 '+krw(o.amt):'매달 '+o.day+'일 '+krw(o.mon)} · 원금 ${krw(r0.prin)}</div>
+    out=`<div class="sbox"><div class="meta" style="margin:0">${ymdS(r0.start)} ~ ${ymdS(r0.end)} (${r0.yrs.toFixed(1)}년) · ${o.mode==='lump'?'한 번에 '+krw(o.amt):o.freq==='d'?'매일(거래일) '+krw(o.mon):'매달 '+o.day+'일 '+krw(o.mon)} · 원금 ${krw(r0.prin)}</div>
      ${SIMR.late?`<div class="chip" style="color:var(--acc);border-color:var(--acc)">${esc((M(SIMR.late[0])||{}).name||SIMR.late[0])} 상장일(${ymdS(SIMR.late[1])})부터 같은 기간으로 비교했어요</div>`:''}
      ${SIMR.bad.length?`<div class="chip">${SIMR.bad.map(c=>esc((M(c)||{}).name||c)).join(', ')}: 과거 시세를 찾지 못해 뺐어요</div>`:''}
      ${simChart()}</div>
@@ -827,9 +828,9 @@ function simView(){
    ${SIM.codes.length<4?`<div class="search" style="margin-top:8px"><input id="s_q" placeholder="＋ ETF 추가 (이름 검색)" autocomplete="off" oninput="simPick(this.value)"><div class="results" id="s_pick"></div></div>`:''}</div>
   <div class="fq"><div class="fqt">언제부터?</div><div class="seg wrap">${b('per','1','1년 전')}${b('per','3','3년 전')}${b('per','5','5년 전')}${b('per','10','10년 전')}${b('per','max','상장일부터')}${b('per','date','날짜 지정')}</div>
    ${SIM.per==='date'?`<input class="sin" type="date" value="${SIM.from}" min="2002-01-01" onchange="SIM.from=this.value;SIMR=null;simSave()">`:''}</div>
-  <div class="fq"><div class="fqt">어떻게 투자?</div><div class="seg wrap">${b('mode','lump','한 번에 (거치식)')}${b('mode','dca','매달 (적립식)')}</div>
+  <div class="fq"><div class="fqt">어떻게 투자?</div><div class="seg wrap">${b('mode','lump','한 번에 (거치식)')}${b('mode','dca','나눠서 (적립식)')}</div>
    ${SIM.mode==='lump'?`<label class="slab">투자 금액 <input class="sin" inputmode="numeric" value="${(SIM.amt||0).toLocaleString('ko-KR')}" onchange="simNum('amt',this)"> 원</label>`
-   :`<label class="slab">매달 <input class="sin" inputmode="numeric" value="${(SIM.mon||0).toLocaleString('ko-KR')}" onchange="simNum('mon',this)"> 원, 매월 <input class="sin sm" inputmode="numeric" value="${SIM.day}" onchange="simNum('day',this)"> 일</label>`}</div>
+   :`<div class="seg wrap" style="margin-top:8px">${b('freq','m','매달')}${b('freq','d','매일')}</div>`+(SIM.freq==='d'?`<label class="slab">매일 <input class="sin" inputmode="numeric" value="${(SIM.dmon||0).toLocaleString('ko-KR')}" onchange="simNum('dmon',this)"> 원씩 (장 열리는 날마다)</label>`:`<label class="slab">매달 <input class="sin" inputmode="numeric" value="${(SIM.mon||0).toLocaleString('ko-KR')}" onchange="simNum('mon',this)"> 원, 매월 <input class="sin sm" inputmode="numeric" value="${SIM.day}" onchange="simNum('day',this)"> 일</label>`)}</div>
   <div class="fq"><div class="fqt">계좌 종류 <span>분배금 세금이 달라요</span></div><div class="seg wrap">${b('acct','gen','일반계좌 (15.4% 떼고 재투자)')}${b('acct','tax','연금·ISA (세금 없이 재투자)')}</div></div>
   <button class="sgo" onclick="simGo()" ${SIMBUSY||!SIM.codes.length?'disabled':''}>${SIMBUSY?'계산 중…':'계산하기'}</button>
   ${out}
