@@ -203,6 +203,7 @@ h1{font-size:21px;letter-spacing:-.3px}
 .emap .ebest{margin-top:9px;font-size:12.5px;color:var(--mute)}.emap .ebest b{color:var(--ink)}
 .antc{background:linear-gradient(135deg,#2b1f1a,#16120f);border:1px solid #6b4a36;border-radius:18px;padding:14px 15px;margin-bottom:12px}.antc ul{margin:8px 0 0;padding-left:17px;font-size:13px;line-height:1.6}
 .rfb{margin-left:auto;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:#1c2029;color:var(--ink);font-size:19px;line-height:1;cursor:pointer}.rfb:active{transform:rotate(180deg);transition:transform .3s}
+.inst{display:flex;align-items:center;gap:10px;background:var(--card);border:1px dashed #3a4566;border-radius:14px;padding:10px 12px;margin-bottom:12px;font-size:13px}.inst b{display:block;font-size:13.5px}.inst button{border:0;border-radius:10px;padding:8px 10px;font:inherit;font-size:12.5px;font-weight:700}
 .pfbtn{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:40;display:flex;align-items:center;gap:6px;background:#1c2029;border:1px solid var(--line);color:var(--ink);padding:10px 14px;border-radius:999px;font-weight:700;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.35)}.pfbtn .up{color:var(--up)}.pfbtn .down{color:var(--down)}
 .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#eef0f4;color:#111;padding:10px 16px;border-radius:12px;font-weight:700;z-index:50;font-size:14px}
 .adhome{margin:0 0 14px}
@@ -657,6 +658,14 @@ function syncBox(){const m=syMsg?`<div class="meta" style="color:var(--acc)">${e
   return `<div class="card"><div class="meta" style="margin-top:0">🔄 기기를 바꿔도 그대로 — 가입 없이 6자리 코드로 저장</div>${m}<div style="display:flex;gap:8px;margin-top:8px">${PF.items.length?`<button class="btn" style="flex:1;margin:0" onclick="syncNew()">코드 만들기</button>`:''}<button class="btn" style="flex:1;margin:0;background:var(--line);color:var(--ink)" onclick="syIn=true;syMsg='';render()">코드로 불러오기</button></div></div>`}
 
 function goHome(){store.set('tab2','rank');location.href='/'}
+// ---------- 홈 화면에 추가 안내 (두 번째 방문부터, 닫으면 30일 숨김) ----------
+let INSTEV=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTEV=e});
+(()=>{const n=store.get('visits',0)+1;store.set('visits',n)})();
+function instBox(){const sa=window.matchMedia&&matchMedia('(display-mode: standalone)').matches||navigator.standalone;if(sa||store.get('visits',0)<2||Date.now()<store.get('instHide',0))return'';
+  const ios=/iPhone|iPad|iPod/.test(navigator.userAgent);if(!ios&&!INSTEV)return'';
+  return `<div class="inst"><div style="font-size:24px">📲</div><div style="flex:1"><b>홈 화면에 추가하면 앱처럼 바로 열려요</b>${ios?'<span class="meta" style="margin:0">사파리 아래 공유 버튼(□↑) → "홈 화면에 추가"</span>':'<span class="meta" style="margin:0">설치해도 용량은 거의 안 들어요</span>'}</div>${ios?'':'<button style="background:var(--acc);color:#111" onclick="instGo()">추가</button>'}<button style="background:none;color:var(--mute)" onclick="store.set(\'instHide\',Date.now()+30*864e5);render()">✕</button></div>`}
+async function instGo(){if(!INSTEV)return;INSTEV.prompt();try{await INSTEV.userChoice}catch(e){}INSTEV=null;render()}
+
 function pfChip(){
   if(view.name==='pf'||!PF.items.length)return '';
   let t='💼 내 포트폴리오';
@@ -854,7 +863,7 @@ function rankView(){
   const fbd=(LIST.find(x=>x.fbd)||{}).fbd;
   const note={nightUp:'한국 장 마감 뒤 지금까지 오른 순 (마감 iNAV 대비)',nightDown:'한국 장 마감 뒤 지금까지 내린 순 (마감 iNAV 대비)',amt:'오늘 한국 장 거래대금',fbuy:`외국인 순매수 금액 (${fbd?fbd.slice(4,6)+'/'+fbd.slice(6):''} 기준)`,fsell:`외국인 순매도 금액 (${fbd?fbd.slice(4,6)+'/'+fbd.slice(6):''} 기준)`,todayUp:'오늘 한국 장 등락률',todayDown:'오늘 한국 장 등락률'}[k];
   const seg=RANKS.map(r=>`<button class="${rankKey===r[0]?'on':''}" onclick="rankKey='${r[0]}';render()">${r[1]}</button>`).join('');
-  return `${etfMap()}${amCard()}${premBox()}${nightBanner()}${evStrip()}<div class="seg">${seg}</div><div class="note">${note} · 상위 ${xs.length}개</div><div class="list">${xs.map((x,i)=>li(x,i,right(x))).join('')||'<div class="empty">데이터가 없어요</div>'}</div>${fbBox()}`;
+  return `${etfMap()}${amCard()}${instBox()}${premBox()}${nightBanner()}${evStrip()}<div class="seg">${seg}</div><div class="note">${note} · 상위 ${xs.length}개</div><div class="list">${xs.map((x,i)=>li(x,i,right(x))).join('')||'<div class="empty">데이터가 없어요</div>'}</div>${fbBox()}`;
 }
 function card(code){
   const d=DATA[code],m=LIST.find(x=>x.code===code)||{};
