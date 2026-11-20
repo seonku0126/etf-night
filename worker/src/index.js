@@ -82,6 +82,25 @@ async function hist(code) {
   }
   return null;
 }
+// /kr?c=133690,360750: 국내 ETF 현재가 (네이버 실시간 → 실패 시 Yahoo), 1분 캐시
+const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/130 Safari/537.36';
+async function krpx(codes) {
+  const q = {}, num = (v) => +String(v ?? '').replace(/,/g, '');
+  try {
+    const r = await fetch('https://polling.finance.naver.com/api/realtime/domestic/stock/' + codes.join(','), { headers: { 'User-Agent': UA, Referer: 'https://m.stock.naver.com/' } });
+    if (r.ok) for (const d of (await r.json()).datas || []) { const v = num(d.closePrice); if (v > 0) q[d.itemCode] = v; }
+  } catch (e) {}
+  if (Object.keys(q).length < codes.length / 2) {
+    try {
+      const r = await fetch('https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + codes.join(','), { headers: { 'User-Agent': UA, Referer: 'https://finance.naver.com/' } });
+      if (r.ok) for (const a of (JSON.parse(await r.text()).result || {}).areas || []) for (const d of a.datas || []) if (d.nv > 0) q[d.cd] = d.nv;
+    } catch (e) {}
+  }
+  if (Object.keys(q).length < codes.length / 2) {
+    for (const x of await spark(codes.map((c) => c + '.KS'))) { const m = ((x.response || [])[0] || {}).meta || {}; if (m.regularMarketPrice > 0) q[x.symbol.slice(0, 6)] = m.regularMarketPrice; }
+  }
+  return q;
+}
 // /fb: 의견 받기 (KV 저장). 목록은 FB_KEY가 있어야 볼 수 있음
 async function fb(req, env, cors) {
   const J = (o, st = 200) => new Response(JSON.stringify(o), { status: st, headers: { ...cors, 'Content-Type': 'application/json' } });
@@ -123,6 +142,21 @@ export default {
         if (!d) return J({ error: 'nodata' }, 404, 'public, max-age=600');
         res = new Response(JSON.stringify(d), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=43200' } });
         ctx.waitUntil(cache.put(key, res.clone()));
+      }
+      const out = new Response(res.body, res);
+      for (const [k, v] of Object.entries(cors)) out.headers.set(k, v);
+      return out;
+    }
+    if (url.pathname === '/kr') {
+      const cs = [...new Set((url.searchParams.get('c') || '').toUpperCase().split(',').filter((c) => /^[0-9A-Z]{6}$/.test(c)))].sort().slice(0, 60);
+      const J = (o, st) => new Response(JSON.stringify(o), { status: st, headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' } });
+      if (!cs.length) return J({ error: 'code' }, 400);
+      const cache = caches.default, key = new Request('https://cache.local/kr/' + cs.join(','));
+      let res = await cache.match(key);
+      if (!res) {
+        const q = await krpx(cs);
+        res = new Response(JSON.stringify({ at: new Date().toISOString(), q }), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' } });
+        if (Object.keys(q).length) ctx.waitUntil(cache.put(key, res.clone()));
       }
       const out = new Response(res.body, res);
       for (const [k, v] of Object.entries(cors)) out.headers.set(k, v);

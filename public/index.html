@@ -191,6 +191,11 @@ h1{font-size:21px;letter-spacing:-.3px}
 .abgo{align-self:flex-start;margin-top:4px;font-size:13.5px;font-weight:800;color:#111;background:var(--acc);padding:7px 12px;border-radius:10px}
 .adbig .disc{font-size:10px;color:#5d6470;margin:6px 4px 0;line-height:1.4}
 .sharebtn{display:block;width:100%;margin-top:10px;padding:10px;border:1px solid #333a4a;border-radius:12px;background:rgba(255,255,255,.04);color:var(--ink);font-weight:700;font-size:14px}
+.amc{display:block;width:100%;text-align:left;background:linear-gradient(135deg,#2a2216,#17150f);border:1px solid #5a4a24;border-radius:18px;padding:14px 15px;margin-bottom:12px;color:var(--ink);font:inherit}
+.amc .t{font-size:13px;color:#d9c48a}.amc .v{font-size:26px;font-weight:800;margin-top:2px}.amc .s{font-size:12.5px;color:var(--mute);margin-top:2px}
+.prem{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:12px}.prem h3{margin:0 0 6px;font-size:14.5px}
+.prem .r{display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--line);font-size:13.5px;cursor:pointer}.prem .r:first-of-type{border-top:0}
+.pbadge{display:inline-block;margin-top:8px;font-size:12px;padding:3px 8px;border-radius:999px;border:1px solid}
 .pfbtn{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:40;display:flex;align-items:center;gap:6px;background:#1c2029;border:1px solid var(--line);color:var(--ink);padding:10px 14px;border-radius:999px;font-weight:700;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.35)}.pfbtn .up{color:var(--up)}.pfbtn .down{color:var(--down)}
 .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#eef0f4;color:#111;padding:10px 16px;border-radius:12px;font-weight:700;z-index:50;font-size:14px}
 .adhome{margin:0 0 14px}
@@ -526,7 +531,7 @@ function pfView(){
   const sum=`<div class="card">
     <div class="meta" style="margin-top:0">내 포트폴리오 · 추정</div>
     <div class="big" style="font-size:30px">${won(total)}</div>
-    <div class="sumrow"><span>오늘 밤 예상 변동</span><span class="pct ${cls(night)}">${sw(night)} (${sign(lastTotal?night/lastTotal*100:0)})</span></div>
+    <div class="sumrow"><span>${amLabel()}</span><span class="pct ${cls(night)}">${sw(night)} (${sign(lastTotal?night/lastTotal*100:0)})</span></div>
     <div class="sumrow"><span>총 손익 · 종가 기준 (원금 ${won(cost)})</span><span class="pct ${cls(pnlC)}">${sw(pnlC)} (${sign(cost?pnlC/cost*100:0)})</span></div>
     <div class="sumrow"><span>총 손익 · 밤 예상 반영</span><span class="pct ${cls(pnl)}">${sw(pnl)} (${sign(cost?pnl/cost*100:0)})</span></div>
     ${same.length?`<div class="meta" style="color:var(--acc);margin-top:8px" onclick="openForm(${same[0].i})">⚠ ${esc(same.map(r=>(r.m.name||r.code)).join(', '))}의 평균 매수가가 오늘 종가와 같아요. 증권사 앱의 실제 평균단가로 고쳐 주세요 (눌러서 수정)</div>`:''}
@@ -535,7 +540,7 @@ function pfView(){
   </div>`;
   const cashRow=`<div class="li" onclick="openCash()"><div class="l"><div class="nm">예수금</div><div class="s">눌러서 수정</div></div><div class="r"><div class="v">${won(cash)}</div></div></div>`;
   const list=rows.length?`<div class="list">${rows.map(r=>`<div class="li" onclick="openForm(${r.i})">
-     <div class="l"><div class="nm">${esc(r.m.name||r.code)}</div><div class="s">${r.qty.toLocaleString('ko-KR')}주 · 평균 ${won(r.avg)} · ${r.src} ${won(r.val/r.qty)}</div></div>
+     <div class="l"><div class="nm">${esc(r.m.name||r.code)}</div><div class="s">${r.qty.toLocaleString('ko-KR')}주 · 평균 ${won(r.avg)} · ${r.src} ${won(r.val/r.qty)}</div>${premBadge(r.code)}</div>
      <div class="r"><div class="v">${won(r.val)}</div><div class="p ${cls(r.val-r.night-r.cost)}">${sign(r.cost?(r.val-r.night-r.cost)/r.cost*100:0)}</div></div>
      <div class="ed"><button onclick="event.stopPropagation();openForm(${r.i})">수정</button><button class="del" onclick="event.stopPropagation();delItem(${r.i})">삭제</button></div></div>`).join('')}
      ${cashRow}</div>`
@@ -543,6 +548,7 @@ function pfView(){
   const ub=undo?`<div class="undo"><span>${esc(M(undo.it.code).name||undo.it.code)} 삭제됨</span><button onclick="undoDel()">되돌리기</button></div>`:'';
   return ub+sum+list+`
     <button class="btn" onclick="openForm(null)">+ 종목 추가</button>
+    ${rows.length?`<div style="display:flex;gap:8px;margin-top:8px"><button class="btn" style="flex:1;margin:0" onclick="pfShareImg(true)">↗ % 만 공유</button><button class="btn" style="flex:1;margin:0" onclick="pfShareImg(false)">↗ 금액까지 공유</button></div>`:''}
     <div class="note" style="margin-top:10px">${META?'밤 추정 '+hm(META.at)+' 기준 · ':''}5분마다 새로 불러와요. 가격은 밤 추정값(시가총액 상위 150개) 또는 마지막 종가를 써요. 이 기기 브라우저에만 저장되고, 다른 사람에게는 이 칸이 보이지 않아요.</div>`;
 }
 function formView(){
@@ -575,8 +581,42 @@ function delItem(i){const it=PF.items[i];if(!it)return;PF.items.splice(i,1);pers
 function undoDel(){if(!undo)return;PF.items.splice(Math.min(undo.i,PF.items.length),0,undo.it);undo=null;clearTimeout(undoT);persist();render()}
 
 
+
+// ---------- 아침 고평가 경고: 한국 장중 현재가 vs 밤 추정 적정가 ----------
+let KRP={},KRAT=0;const KRURL='https://etf-night-mkt.seonku0126.workers.dev/kr?c=';
+const kstNow=()=>{const d=new Date(Date.now()+9*36e5);return{dow:d.getUTCDay(),m:d.getUTCHours()*60+d.getUTCMinutes()}};
+const krOpen=()=>{const k=kstNow();return k.dow>0&&k.dow<6&&k.m>=540&&k.m<=930};
+function krCodes(){const top=LIST.filter(x=>x.est!=null).sort((a,b)=>(b.amt||0)-(a.amt||0)).slice(0,40).map(x=>x.code);return [...new Set([...favs,...PF.items.map(x=>x.code),...top])].slice(0,60)}
+async function liveKr(){if(document.hidden||!META||!krOpen())return;try{const r=await fetch(KRURL+krCodes().join(','),{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(j.q&&Object.keys(j.q).length){KRP=j.q;KRAT=Date.now();if(['rank','fav','pf'].includes(view.name))render()}}catch(e){}}
+setInterval(liveKr,60000);document.addEventListener('visibilitychange',liveKr);setTimeout(liveKr,4000);
+function prem(code){const m=M(code),p=KRP[code];if(!krOpen()||!p||!(m.est>0)||Date.now()-KRAT>3e5)return null;return (p/m.est-1)*100}
+function premBadge(code){const v=prem(code);if(v==null||Math.abs(v)<0.3)return'';const hi=v>0;return `<div class="pbadge" style="color:${hi?'var(--up)':'var(--down)'};border-color:${hi?'var(--up)':'var(--down)'}">${hi?'🚨 추정 적정가보다 '+v.toFixed(2)+'% 비싸게 거래 중':'💎 추정 적정가보다 '+Math.abs(v).toFixed(2)+'% 싸게 거래 중'}</div>`}
+function premBox(){if(!krOpen()||!Object.keys(KRP).length)return'';
+  const xs=Object.keys(KRP).map(c=>({c,v:prem(c),m:M(c)})).filter(x=>x.v!=null);if(!xs.length)return'';
+  const hi=xs.filter(x=>x.v>=0.5).sort((a,b)=>b.v-a.v).slice(0,5),lo=xs.filter(x=>x.v<=-0.5).sort((a,b)=>a.v-b.v).slice(0,3);
+  const row=x=>`<div class="r" onclick="openD('${x.c}')"><span>${esc(x.m.name)}</span><b class="${x.v>0?'up':'down'}">${x.v>0?'+':''}${x.v.toFixed(2)}%</b></div>`;
+  return `<div class="prem"><h3>🚨 아침 고평가 경고</h3><div class="meta" style="margin:0 0 6px">지금 거래가격 vs 밤사이 미국장·환율로 계산한 추정 적정가 (1분마다)</div>${hi.length?hi.map(row).join(''):'<div class="meta">크게 비싸게 거래 중인 ETF는 없어요 👍</div>'}${lo.length?`<h3 style="margin-top:10px">💎 싸게 거래 중</h3>${lo.map(row).join('')}`:''}<div class="meta" style="margin-top:6px">거래량 상위·관심·내 계좌 ETF 기준 · 추정치라 틀릴 수 있으며 투자 권유가 아닙니다.</div></div>`}
+
+// ---------- 내일 아침 내 계좌 ----------
+function amLabel(){const k=kstNow();if(k.dow>0&&k.dow<6&&k.m>=540&&k.m<930)return'밤사이 변동 (어제 종가 대비)';return k.m<540?'오늘 아침 예상 손익':'내일 아침 예상 손익'}
+function pfNight(){let v=0,n=0;for(const it of PF.items){const m=M(it.code),px=priceNow(it.code).px||it.avg,last=m.price||px;v+=px*it.qty;n+=(px-last)*it.qty}const base=v-n;return{n,p:base?n/base*100:0,v}}
+function amCard(){if(!META)return'';if(!PF.items.length)return `<button class="amc" onclick="openPF()"><div class="t">🌅 내일 아침 내 계좌</div><div class="v" style="font-size:18px">보유 ETF를 넣으면 내일 아침 손익을 미리 계산해 드려요</div><div class="s">이 기기에만 저장돼요 · 30초면 끝 ›</div></button>`;
+  const r=pfNight();return `<button class="amc" onclick="openPF()"><div class="t">🌅 ${amLabel()}</div><div class="v ${cls(r.p)}">${sw(r.n)} <span style="font-size:17px">(${sign(r.p)})</span></div><div class="s">내 계좌 추정 ${won(r.v)} · 눌러서 자세히 ›</div></button>`}
+async function pfShareImg(hide){const r=pfNight(),W=1080,H=1350,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  const bg=g.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#1d2438');bg.addColorStop(1,'#0f1115');g.fillStyle=bg;g.fillRect(0,0,W,H);
+  const F=(w,sz)=>`${w} ${sz}px -apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif`;g.textAlign='center';
+  g.fillStyle='#d9c48a';g.font=F(700,52);g.fillText('🌅 '+amLabel().replace(' (어제 종가 대비)',''),W/2,230);
+  const col=r.p>0.005?'#ff5a5f':r.p<-0.005?'#4e8cff':'#eef0f4';g.fillStyle=col;g.font=F(800,190);g.fillText((r.p>0?'+':'')+r.p.toFixed(2)+'%',W/2,500);
+  if(!hide){g.font=F(700,72);g.fillText(sw(r.n),W/2,620)}
+  const rows=PF.items.map(it=>{const m=M(it.code),px=priceNow(it.code).px||it.avg,last=m.price||px;return{n:(m.name||it.code).replace(/^(TIGER|KODEX|ACE|RISE|SOL|TIME|PLUS|KIWOOM|HANARO|KoAct|WON) /,''),p:last?(px/last-1)*100:0,v:px*it.qty}}).sort((a,b)=>b.v-a.v).slice(0,4);
+  g.textAlign='left';let y=hide?700:760;for(const x of rows){g.fillStyle='#181b22';g.fillRect(90,y-58,W-180,86);g.fillStyle='#eef0f4';g.font=F(600,40);g.fillText(x.n.length>16?x.n.slice(0,16)+'…':x.n,120,y);g.textAlign='right';g.fillStyle=x.p>0.005?'#ff5a5f':x.p<-0.005?'#4e8cff':'#eef0f4';g.font=F(800,42);g.fillText((x.p>0?'+':'')+x.p.toFixed(2)+'%',W-120,y);g.textAlign='left';y+=106}
+  g.textAlign='center';g.fillStyle='#8a919e';g.font=F(500,34);g.fillText('밤사이 미국장·환율 반영 추정치 · 투자 권유 아님',W/2,H-130);g.fillStyle='#f5c542';g.font=F(800,46);g.fillText('daynnightetf.com',W/2,H-70);
+  const blob=await new Promise(res=>c.toBlob(res,'image/png'));const file=new File([blob],'my-morning.png',{type:'image/png'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],text:'내일 아침 내 계좌 미리 보기 👉 https://daynnightetf.com/'}).catch(()=>{})}
+  else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='my-morning.png';a.click()}}
+
 function pfChip(){
-  if(!store.get('me',0)||view.name==='pf')return '';
+  if(view.name==='pf'||!PF.items.length)return '';
   let t='💼 내 포트폴리오';
   if(META&&PF.items.length){let v=0,n=0;for(const it of PF.items){const m=M(it.code),px=priceNow(it.code).px||it.avg,last=m.price||px;v+=px*it.qty;n+=(px-last)*it.qty}
     v+=+PF.cash||0;const p=v-n?n/(v-n)*100:0;t=`💼 <span class="${cls(p)}">${arrow(p)}${Math.abs(p).toFixed(2)}%</span> <span style="font-weight:400">${sw(n)}</span>`}
@@ -771,7 +811,7 @@ function rankView(){
   const fbd=(LIST.find(x=>x.fbd)||{}).fbd;
   const note={nightUp:'한국 장 마감 뒤 지금까지 오른 순 (마감 iNAV 대비)',nightDown:'한국 장 마감 뒤 지금까지 내린 순 (마감 iNAV 대비)',amt:'오늘 한국 장 거래대금',fbuy:`외국인 순매수 금액 (${fbd?fbd.slice(4,6)+'/'+fbd.slice(6):''} 기준)`,fsell:`외국인 순매도 금액 (${fbd?fbd.slice(4,6)+'/'+fbd.slice(6):''} 기준)`,todayUp:'오늘 한국 장 등락률',todayDown:'오늘 한국 장 등락률'}[k];
   const seg=RANKS.map(r=>`<button class="${rankKey===r[0]?'on':''}" onclick="rankKey='${r[0]}';render()">${r[1]}</button>`).join('');
-  return `${mktDash()}${nightBanner()}${evStrip()}<div class="seg">${seg}</div><div class="note">${note} · 상위 ${xs.length}개</div><div class="list">${xs.map((x,i)=>li(x,i,right(x))).join('')||'<div class="empty">데이터가 없어요</div>'}</div>${fbBox()}`;
+  return `${mktDash()}${amCard()}${premBox()}${nightBanner()}${evStrip()}<div class="seg">${seg}</div><div class="note">${note} · 상위 ${xs.length}개</div><div class="list">${xs.map((x,i)=>li(x,i,right(x))).join('')||'<div class="empty">데이터가 없어요</div>'}</div>${fbBox()}`;
 }
 function card(code){
   const d=DATA[code],m=LIST.find(x=>x.code===code)||{};
@@ -780,7 +820,7 @@ function card(code){
   return`<div class="card" onclick="openD('${code}')">
    <div class="hrow"><span class="name">${esc(d.name)}</span><button class="x" onclick="unfav('${code}',event)">삭제</button></div>
    <div class="hrow" style="margin-top:8px;align-items:flex-end"><div><div class="meta" style="margin:0">🌙 장 마감 후</div><span class="big ${cls(d.pct)}" style="font-size:30px">${arrow(d.pct)}${Math.abs(d.pct||0).toFixed(2)}%</span></div><div style="text-align:right"><div class="meta" style="margin:0">예상 가격</div><b style="font-size:17px">${won(d.est)}</b></div></div>
-   ${d.warn?`<div class="chip" style="color:var(--acc);border-color:var(--acc)">${esc(d.warn)}</div>`:''}
+   ${d.warn?`<div class="chip" style="color:var(--acc);border-color:var(--acc)">${esc(d.warn)}</div>`:''}${premBadge(code)}
    <div class="meta">기준값 ${won(d.nav)} (${d.navDate} 마감 iNAV) 대비 · 마지막 종가 ${won(d.price)} 대비 <span class="${cls(d.vsPrice)}">${sign(d.vsPrice)}</span></div>
    ${d.session==='closed'?`<div class="meta">공식 iNAV 방식(정규장 종가) ${won(d.estReg)} <span class="${cls(d.pctReg)}">${sign(d.pctReg)}</span>${d.inavLive?` · 지금 공식 iNAV ${won(d.inavLive)}`:''}</div>`:''}
    <div class="meta">미국 시세 ${hm(d.pricedAt)} · ${esc(d.method)}${d.check?` · 어제 추정 오차 ${(d.check.errBp/100>0?'+':'')+(d.check.errBp/100).toFixed(2)}%`:''}</div></div>`;
