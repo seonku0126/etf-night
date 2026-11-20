@@ -5,6 +5,9 @@ const SYMS = {
   NVDA: '엔비디아', AAPL: '애플', MSFT: '마이크로소프트', AMZN: '아마존', GOOGL: '알파벳', META: '메타', TSLA: '테슬라', AVGO: '브로드컴',
   AMD: 'AMD', PLTR: '팔란티어', TSM: 'TSMC', MU: '마이크론', ANT: '앤트로픽',
 };
+// 같은 서버 인스턴스 안에서만 세는 가벼운 속도 제한 (KV 쓰기 횟수를 아끼려고 메모리 사용)
+const RL = new Map();
+function tooMany(key, max, winMs) { const now = Date.now(), a = (RL.get(key) || []).filter((t) => now - t < winMs); a.push(now); RL.set(key, a); if (RL.size > 5000) RL.clear(); return a.length > max; }
 const ORIGINS = ['https://daynnightetf.com', 'https://www.daynnightetf.com'];
 async function spark(list) {
   const url = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(list.join(','))}&range=1d&interval=5m&includePrePost=true`;
@@ -108,6 +111,8 @@ async function sync(req, env, cors) {
   const ip = req.headers.get('cf-connecting-ip') || '0', url = new URL(req.url);
   const TTL = 60 * 60 * 24 * 365;
   const clean = (b) => { const items = (Array.isArray(b.items) ? b.items : []).slice(0, 50).map((x) => ({ code: String(x.code || '').slice(0, 6).toUpperCase(), qty: +x.qty || 0, avg: +x.avg || 0 })).filter((x) => /^[0-9A-Z]{6}$/.test(x.code) && x.qty > 0); return { items, cash: Math.max(0, +b.cash || 0), u: Date.now() }; };
+  if (tooMany('sync:' + ip + ':' + req.method, req.method === 'GET' ? 30 : 20, 60000)) return J({ error: 'slow' }, 429);
+  if (+(req.headers.get('content-length') || 0) > 8000) return J({ error: 'big' }, 413);
   let b = {}; if (req.method !== 'GET') { try { b = await req.json(); } catch (e) {} }
   if (url.pathname === '/sync/new' && req.method === 'POST') {
     const nk = 'n:' + ip, n = +(await env.FB.get(nk)) || 0; if (n >= 5) return J({ error: 'slow' }, 429);
@@ -178,6 +183,7 @@ export default {
       return out;
     }
     if (url.pathname === '/kr') {
+      if (tooMany('kr:' + (req.headers.get('cf-connecting-ip') || '0'), 30, 60000)) return new Response('{"error":"slow"}', { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } });
       const cs = [...new Set((url.searchParams.get('c') || '').toUpperCase().split(',').filter((c) => /^[0-9A-Z]{6}$/.test(c)))].sort().slice(0, 60);
       const J = (o, st) => new Response(JSON.stringify(o), { status: st, headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' } });
       if (!cs.length) return J({ error: 'code' }, 400);
