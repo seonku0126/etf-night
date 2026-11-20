@@ -12,7 +12,7 @@ const call = async (p) => (await w.fetch(new Request('https://x' + p), ENV)).jso
 const list = await call('/api/list');
 const top = list.slice().sort((a, b) => (b.cap || 0) - (a.cap || 0)).slice(0, N);
 const res = {}; let i = 0;
-async function wk() { while (i < top.length) { const e = top[i++]; try { res[e.code] = await within(call('/api/inav?code=' + e.code), 45000); } catch (x) { res[e.code] = { error: String(x) }; } await new Promise((ok) => setTimeout(ok, 800)); } }
+async function wk() { while (i < top.length && Date.now() - T0 < 900e3) { const e = top[i++]; try { res[e.code] = await within(call('/api/inav?code=' + e.code), 45000); } catch (x) { res[e.code] = { error: String(x) }; } await new Promise((ok) => setTimeout(ok, 800)); } }
 await Promise.all([wk(), wk(), wk()]);
 // 실패한 종목은 한 번 더, 하나씩
 for (const e of top) { if (Date.now() - T0 > 840e3) break; if (res[e.code] && res[e.code].error) { await new Promise((ok) => setTimeout(ok, 1500)); try { res[e.code] = await within(call('/api/inav?code=' + e.code), 45000); } catch (x) {} } }
