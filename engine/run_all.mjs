@@ -6,13 +6,16 @@ import fs from 'fs';
 const N = +process.argv[2] || 150, CH = 50;
 // 요청 하나가 멈춰서 전체가 시간 초과되는 걸 막음: 요청마다 15초 제한, 실패한 곳은 끝에 출력
 const _f = globalThis.fetch, FAIL = {};
-globalThis.fetch = (u, o = {}) => _f(u, { ...o, signal: o.signal || AbortSignal.timeout(15000) }).catch((e) => { let h = '?'; try { h = new URL(String(u.url || u)).host; } catch (x) {} FAIL[h] = (FAIL[h] || 0) + 1; throw e; });
+const HT = {}, ST = {}, SLOW = [];
+globalThis.fetch = (u, o = {}) => { let h = '?'; try { h = new URL(String(u.url || u)).host; } catch (x) {} const t = Date.now();
+  return _f(u, { ...o, signal: o.signal || AbortSignal.timeout(15000) }).then((r) => { const a = HT[h] || (HT[h] = [0, 0]); a[0]++; a[1] += Date.now() - t; if (r.status >= 400) ST[h + ' ' + r.status] = (ST[h + ' ' + r.status] || 0) + 1; return r; })
+    .catch((e) => { FAIL[h] = (FAIL[h] || 0) + 1; throw e; }); };
 const T0 = Date.now(), within = (p, ms) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error('timeout')), ms))]);
 const call = async (p) => (await w.fetch(new Request('https://x' + p), ENV)).json();
 const list = await call('/api/list');
-const top = list.slice().sort((a, b) => (b.cap || 0) - (a.cap || 0)).slice(0, N);
+const top = list.slice().sort((a, b) => (b.cap || 0) - (a.cap || 0)).slice(0, N).sort((a, b) => (b.amt || 0) - (a.amt || 0));
 const res = {}; let i = 0;
-async function wk() { while (i < top.length && Date.now() - T0 < 900e3) { const e = top[i++]; try { res[e.code] = await within(call('/api/inav?code=' + e.code), 45000); } catch (x) { res[e.code] = { error: String(x) }; } await new Promise((ok) => setTimeout(ok, 800)); } }
+async function wk() { while (i < top.length && Date.now() - T0 < 900e3) { const e = top[i++]; const t1 = Date.now(); try { res[e.code] = await within(call('/api/inav?code=' + e.code), 45000); } catch (x) { res[e.code] = { error: String(x) }; } if (Date.now() - t1 > 10000) SLOW.push([e.code, Math.round((Date.now() - t1) / 1000)]); await new Promise((ok) => setTimeout(ok, 800)); } }
 await Promise.all([wk(), wk(), wk()]);
 // 실패한 종목은 한 번 더, 하나씩
 for (const e of top) { if (Date.now() - T0 > 840e3) break; if (res[e.code] && res[e.code].error) { await new Promise((ok) => setTimeout(ok, 1500)); try { res[e.code] = await within(call('/api/inav?code=' + e.code), 45000); } catch (x) {} } }
@@ -47,4 +50,4 @@ fs.writeFileSync(OUT + '/live.json', JSON.stringify({ at, e: L }));
 fs.writeFileSync(OUT + '/syms.json', JSON.stringify(syms));
 console.log(JSON.stringify({ liveEtf: Object.keys(L).length, syms: syms.length }));
 const ok = Object.values(res).filter((j) => !j.error).length;
-console.log(JSON.stringify({ at, computed: top.length, ok, sec: Math.round((Date.now() - T0) / 1000), fail: FAIL, files: files.map((f) => [f, fs.statSync(f).size]) }));
+console.log(JSON.stringify({ at, computed: top.length, ok, sec: Math.round((Date.now() - T0) / 1000), fail: FAIL, st: ST, host: Object.fromEntries(Object.entries(HT).map(([h, [n, ms]]) => [h, [n, Math.round(ms / 1000)]])), slow: SLOW.slice(0, 8), files: files.map((f) => [f, fs.statSync(f).size]) }));
