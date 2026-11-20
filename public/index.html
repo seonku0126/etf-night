@@ -639,7 +639,7 @@ function antCard(){if(Date.now()>Date.parse('2027-02-10'))return'';const q=MKT&&
   return `<div class="antc"><b style="font-size:15.5px">🆕 앤트로픽(ANT) 나스닥 상장</b>${q?` <span style="float:right"><b>$${(+q.p).toFixed(2)}</b> <span class="${cls(q.pc)}">${sign(q.pc)}</span></span>`:''}
   <ul><li>2026년 11월 19일(목) 나스닥 글로벌 셀렉트 시장 상장 · 티커 <b>ANT</b></li><li>공모가는 18일 밤(미국) 결정 · 대표 주관사 골드만삭스·모건스탠리</li><li>미국 2배 레버리지 ETF(디렉시온)도 상장 다음 거래일부터 거래 예정</li>
   <li>보호예수(락업) 해제가 여러 번에 나눠 풀려요: <b>12/15 → 1/5 → 1/19 → 2/2</b> (공모가 결정일 기준 예상) · 풀리는 날 물량 부담 주의</li></ul>
-  <div class="meta" style="margin:8px 0 0">AI·나스닥 ETF 흐름에 영향을 줄 수 있어요. 투자 권유가 아닙니다.</div></div>`}
+  <div class="meta" style="margin:8px 0 0">AI·나스닥 ETF 흐름에 영향을 줄 수 있어요. 투자 권유가 아닙니다. <a href="/guide/anthropic-ipo/">앤트로픽 상장 총정리 →</a></div></div>`}
 
 // ---------- 동기화 코드 (6자리, 가입 없음) ----------
 const SYURL='https://etf-night-mkt.seonku0126.workers.dev/sync';let SYC=store.get('pfsync',''),syT=null,syMsg='',syIn=false;
@@ -1043,6 +1043,6 @@ function status(){if(META&&LIVEP&&LIVEP.n){$('#status').textContent='🟢 실시
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')load()});
 })()
 </script>
-<div style="text-align:center;padding:18px 0 28px;font-size:12px;color:#8a919e"><a href="guide/night-price/" style="color:#8a919e">밤에 ETF 가격 보는 법</a> · <a href="guide/inav/" style="color:#8a919e">iNAV란?</a> · <a href="night/" style="color:#8a919e">오늘 밤 시황</a> · <a href="guide/" style="color:#8a919e">가이드 더보기</a> · <a href="etf/" style="color:#8a919e">전체 ETF 목록</a> · <a href="privacy.html" style="color:#8a919e">개인정보처리방침</a> · 정보 제공 목적이며 투자 권유가 아닙니다</div>
+<div style="text-align:center;padding:18px 0 28px;font-size:12px;color:#8a919e"><a href="guide/night-price/" style="color:#8a919e">밤에 ETF 가격 보는 법</a> · <a href="guide/inav/" style="color:#8a919e">iNAV란?</a> · <a href="guide/anthropic-ipo/" style="color:#8a919e">앤트로픽 상장</a> · <a href="guide/us-holidays/" style="color:#8a919e">미국 휴장일</a> · <a href="night/" style="color:#8a919e">오늘 밤 시황</a> · <a href="guide/" style="color:#8a919e">가이드 더보기</a> · <a href="etf/" style="color:#8a919e">전체 ETF 목록</a> · <a href="privacy.html" style="color:#8a919e">개인정보처리방침</a> · 정보 제공 목적이며 투자 권유가 아닙니다</div>
 </body>
 </html>
