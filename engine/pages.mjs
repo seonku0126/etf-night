@@ -54,7 +54,7 @@ for (const x of list) {
   const w = whale.items[x.c] || null;
   const name = x.n;
   const hasEst = x.est != null && !d.error;
-  const title = `${name} 밤 예상가·실시간 추정 iNAV | 데이앤나잇 ETF`;
+  const title = `${name} 주가 · 밤 예상가(실시간 추정 iNAV)·구성종목 | 데이앤나잇 ETF`;
   const desc = hasEst
     ? `${name} 밤사이 예상 가격 ${won(x.est)} (${sign(x.pct)}), 오늘 종가 ${won(x.p)}, 거래대금 ${eok((x.amt || 0) / 100)}. 미국장 움직임을 반영한 추정 iNAV와 외국인·기관 큰손 동향.`
     : `${name} 오늘 종가 ${won(x.p)} (${sign(x.ch)}), 거래대금 ${eok((x.amt || 0) / 100)}. 외국인·기관 순매수와 자금 유입 동향을 확인하세요.`;
