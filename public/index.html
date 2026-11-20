@@ -202,6 +202,7 @@ h1{font-size:21px;letter-spacing:-.3px}
 .emap .et span{display:block;font-size:12px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.emap .et b{display:block;font-size:17px;margin-top:2px}.emap .et small{font-size:10.5px;opacity:.6}
 .emap .ebest{margin-top:9px;font-size:12.5px;color:var(--mute)}.emap .ebest b{color:var(--ink)}
 .antc{background:linear-gradient(135deg,#2b1f1a,#16120f);border:1px solid #6b4a36;border-radius:18px;padding:14px 15px;margin-bottom:12px}.antc ul{margin:8px 0 0;padding-left:17px;font-size:13px;line-height:1.6}
+.rfb{margin-left:auto;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:#1c2029;color:var(--ink);font-size:19px;line-height:1;cursor:pointer}.rfb:active{transform:rotate(180deg);transition:transform .3s}
 .pfbtn{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:40;display:flex;align-items:center;gap:6px;background:#1c2029;border:1px solid var(--line);color:var(--ink);padding:10px 14px;border-radius:999px;font-weight:700;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.35)}.pfbtn .up{color:var(--up)}.pfbtn .down{color:var(--down)}
 .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#eef0f4;color:#111;padding:10px 16px;border-radius:12px;font-weight:700;z-index:50;font-size:14px}
 .adhome{margin:0 0 14px}
@@ -305,7 +306,7 @@ h1 span{background:linear-gradient(90deg,#f5c542,#ffde7a,#ff9f43,#f5c542);backgr
 </head>
 <body>
 <header>
-  <div class="brand"><img src="icon.svg" alt=""><h1>데이앤나잇 <span style="color:var(--acc)">ETF</span></h1></div>
+  <div class="brand"><img src="icon.svg" alt=""><h1>데이앤나잇 <span style="color:var(--acc)">ETF</span></h1><button class="rfb" onclick="goHome()" aria-label="홈으로 가서 새로고침">↻</button></div>
   <p class="tagline">미국장이 열린 밤, <b>내 해외 ETF는 지금 얼마일까?</b><br>밤사이 예상 가격과 큰손 움직임을 한눈에.</p>
   <div class="sub" id="status">불러오는 중…</div>
   <div class="search"><input id="q" placeholder="🔍 ETF 이름으로 검색 (예: 나스닥, S&P500)" autocomplete="off"><div class="results" id="res"></div></div>
@@ -654,6 +655,7 @@ function syncBox(){const m=syMsg?`<div class="meta" style="color:var(--acc)">${e
   if(syIn)return `<div class="card"><div class="meta" style="margin-top:0">🔄 코드로 불러오기</div><input id="sy_in" inputmode="numeric" maxlength="7" placeholder="6자리 숫자" style="width:100%;font-size:22px;letter-spacing:4px;padding:10px;border-radius:10px;border:1px solid var(--line);background:#13161c;color:var(--ink)">${m}<div style="display:flex;gap:8px;margin-top:8px"><button class="btn" style="flex:1;margin:0;background:var(--line);color:var(--ink)" onclick="syIn=false;syMsg='';render()">취소</button><button class="btn" style="flex:1;margin:0" onclick="syncJoin()">불러오기</button></div></div>`;
   return `<div class="card"><div class="meta" style="margin-top:0">🔄 기기를 바꿔도 그대로 — 가입 없이 6자리 코드로 저장</div>${m}<div style="display:flex;gap:8px;margin-top:8px">${PF.items.length?`<button class="btn" style="flex:1;margin:0" onclick="syncNew()">코드 만들기</button>`:''}<button class="btn" style="flex:1;margin:0;background:var(--line);color:var(--ink)" onclick="syIn=true;syMsg='';render()">코드로 불러오기</button></div></div>`}
 
+function goHome(){store.set('tab2','rank');location.href='/'}
 function pfChip(){
   if(view.name==='pf'||!PF.items.length)return '';
   let t='💼 내 포트폴리오';
