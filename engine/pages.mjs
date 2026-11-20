@@ -217,6 +217,50 @@ ${ta.length || tb.length ? `<div class="card"><h2>많이 담은 종목</h2><div 
     try { const h = fs.readFileSync(f, 'utf8'); fs.writeFileSync(f, h.replace('<div class="card rel"><h2>분류별 보기</h2>', `<div class="card rel"><h2>비교해 보기</h2>${arr.map(([s, n]) => `<a href="/vs/${s}/">vs ${esc(short(n))}</a>`).join('')}</div><div class="card rel"><h2>분류별 보기</h2>`)); } catch (e) {}
   }
 }
+// ---------- 종목으로 ETF 찾기 (/stock/<티커>/): "엔비디아 ETF" 검색 유입용 ----------
+{
+  const by = {};
+  for (const x of list) { const d = det[x.c]; if (!d || !d.top) continue; for (const t of d.top) { if (!t.t || !(t.w > 0)) continue; const k = String(t.t).toUpperCase().replace(/[^A-Z0-9.]/g, ''); if (!k) continue; (by[k] = by[k] || []).push({ x, w: t.w, n: t.n || t.t }); } }
+  const stockLinks = [];
+  for (const [tk, arr] of Object.entries(by)) {
+    if (arr.length < 3) continue;
+    const names = arr.map((a) => a.n).filter((n) => /[가-힣]/.test(n));
+    const KN = { AMD: 'AMD', TSM: 'TSMC', ASML: 'ASML', IBM: 'IBM', LRCX: '램리서치', AMAT: '어플라이드 머티리얼즈', ANET: '아리스타 네트웍스', MRVL: '마벨 테크놀로지', AVGO: '브로드컴', NVDA: '엔비디아', TSLA: '테슬라', GOOGL: '알파벳', META: '메타', MU: '마이크론', PLTR: '팔란티어', AAPL: '애플', MSFT: '마이크로소프트', AMZN: '아마존' };
+    const nm = KN[tk] || (names.sort((a, b) => names.filter((v) => v === b).length - names.filter((v) => v === a).length)[0] || arr[0].n).trim();
+    const rows = arr.sort((a, b) => b.w - a.w).slice(0, 40);
+    const slug = tk.toLowerCase().replace(/\./g, '-'), url = `${SITE}/stock/${slug}/`;
+    const t = `${nm}(${tk}) 많이 담은 ETF 순위 — 국내 상장 ${arr.length}개 비중 비교`;
+    const desc = `${nm} 비중이 높은 국내 상장 ETF ${arr.length}개를 비중 순으로 정리했어요. 1위 ${rows[0].x.n} ${rows[0].w}%. 밤사이 예상 등락과 오늘 종가도 함께.`;
+    const faq = [[`${nm} 비중이 가장 높은 국내 ETF는?`, `${atTxt} 기준 ${rows[0].x.n}(${rows[0].w}%)이고, 그다음은 ${rows.slice(1, 3).map((r) => `${r.x.n}(${r.w}%)`).join(', ')}예요.`], [`${nm} 담은 ETF는 몇 개예요?`, `상위 보유 종목 기준으로 ${nm}를 담은 국내 상장 ETF는 ${arr.length}개예요.`]];
+    const ld = `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map(([q, an]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: an } })) }).replace(/</g, '\\u003c')}</script>`;
+    const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<title>${esc(t)} | 데이앤나잇 ETF</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${url}">
+<meta property="og:title" content="${esc(nm)} 많이 담은 ETF 순위"><meta property="og:description" content="${esc(desc)}"><meta property="og:image" content="${SITE}/og.png"><meta property="og:url" content="${url}"><meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/icon.svg"><meta name="theme-color" content="#0f1115">${ld}<style>${CSS} td:first-child{color:var(--mute);width:28px} td .sub{font-size:12px}</style></head><body>
+<a class="top" href="/"><img src="/icon.svg" alt="">데이앤나잇 ETF</a>
+<h1>${esc(nm)} 많이 담은 ETF 순위</h1><div class="sub">${esc(tk)} · 국내 상장 ETF ${arr.length}개 · ${atTxt} 기준</div>
+<div class="card"><p style="margin:0">${esc(nm)}를 가장 많이 담은 국내 ETF는 <b>${esc(rows[0].x.n)}</b>로 비중 <b>${rows[0].w}%</b>예요. 비중이 높을수록 ${esc(nm)} 주가 움직임이 ETF 가격에 더 크게 반영돼요.</p></div>
+<div class="card"><table>${rows.map((r, i) => `<tr><td>${i + 1}</td><td><a href="/etf/${r.x.c}/" style="color:var(--ink)">${esc(r.x.n)}</a><div class="sub">종가 ${won(r.x.p)}${r.x.est != null ? ` · 밤 예상 <span class="${cls(r.x.pct)}">${sign(r.x.pct)}</span>` : ''}</div></td><td style="font-weight:800">${r.w}%</td></tr>`).join('')}</table></div>
+<a class="cta" href="/">실시간 밤 예상 가격 보기 →</a>
+<div class="card"><h2>자주 묻는 질문</h2>${faq.map(([q, an]) => `<p style="margin:10px 0 2px"><b>Q. ${esc(q)}</b></p><p style="margin:0;color:#c9ced8">${esc(an)}</p>`).join('')}</div>
+<div class="card rel"><h2>다른 종목으로 찾기</h2>__STOCKLINKS__</div>
+<p class="note">각 ETF의 비중 상위 종목 기준이라, 비중이 작게 담긴 ETF는 빠질 수 있어요. 정보 제공 목적이며 투자 권유가 아닙니다.</p></body></html>`;
+    fs.mkdirSync(path.join(siteDir, 'stock', slug), { recursive: true });
+    fs.writeFileSync(path.join(siteDir, 'stock', slug, 'index.html'), html);
+    urls.push(url); stockLinks.push([arr.length, `<a href="/stock/${slug}/">${esc(nm)}</a>`, slug]);
+  }
+  stockLinks.sort((a, b) => b[0] - a[0]);
+  const linksHtml = stockLinks.slice(0, 30).map((s) => s[1]).join('');
+  for (const s of stockLinks) { const f = path.join(siteDir, 'stock', s[2], 'index.html'); fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace('__STOCKLINKS__', linksHtml)); }
+  // 종목 목록 페이지
+  if (stockLinks.length) {
+    fs.writeFileSync(path.join(siteDir, 'stock', 'index.html'), `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; img-src 'self'">
+<title>종목으로 ETF 찾기 — 엔비디아·애플·테슬라 많이 담은 국내 ETF | 데이앤나잇 ETF</title><meta name="description" content="엔비디아, 애플, 마이크로소프트, 테슬라 등 종목별로 많이 담은 국내 상장 ETF 순위를 볼 수 있어요."><link rel="canonical" href="${SITE}/stock/"><link rel="icon" href="/icon.svg"><style>${CSS}</style></head><body>
+<a class="top" href="/"><img src="/icon.svg" alt="">데이앤나잇 ETF</a><h1>종목으로 ETF 찾기</h1><div class="sub">이 종목을 많이 담은 국내 ETF는?</div><div class="card rel">${stockLinks.map((s) => s[1]).join('')}</div></body></html>`);
+    urls.push(`${SITE}/stock/`);
+  }
+}
 // ---------- 오늘 밤 시황 (매 갱신마다 새로 씀) ----------
 {
   const M = atKst.getUTCMonth() + 1, D = atKst.getUTCDate(), H = atKst.getUTCHours();
