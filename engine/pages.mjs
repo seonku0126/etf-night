@@ -92,7 +92,7 @@ ${w ? `<div class="card"><h2>🐋 큰손 동향 <span class="sub">${md(w.d)} 기
 <div><span>자금 유입 하루 / 20일</span><b><span class="${cls(w.fl1)}">${ek(w.fl1)}</span> / <span class="${cls(w.fl20)}">${ek(w.fl20)}</span></b></div>
 <div><span>연속 매매</span><b>${w.fs >= 2 ? `외인 ${w.fs}일 매수` : w.fs <= -2 ? `외인 ${-w.fs}일 매도` : w.os >= 2 ? `기관 ${w.os}일 매수` : w.os <= -2 ? `기관 ${-w.os}일 매도` : '-'}</b></div>
 </div></div>` : ''}
-${top.length ? `<div class="card"><h2>많이 담은 종목</h2><table>${top.map((t) => `<tr><td>${esc(t.n || t.t)}</td><td>${t.w}%</td></tr>`).join('')}</table></div>` : ''}
+${top.length ? `<div class="card"><h2>많이 담은 종목</h2><table>${top.map((t) => `<tr><td>__STK_${String(t.t || '').toUpperCase().replace(/[^A-Z0-9.]/g, '')}__${esc(t.n || t.t)}__STKEND__</td><td>${t.w}%</td></tr>`).join('')}</table></div>` : ''}
 <a class="cta" href="/#etf=${x.c}">실시간 화면에서 보기 →</a>
 ${faqHtml}
 <div class="card rel"><h2>오늘 밤 시황</h2><a href="/night/">${atKst.getUTCMonth() + 1}월 ${atKst.getUTCDate()}일 해외 ETF 밤 예상 등락 →</a></div>
@@ -251,6 +251,8 @@ ${ta.length || tb.length ? `<div class="card"><h2>많이 담은 종목</h2><div 
     urls.push(url); stockLinks.push([arr.length, `<a href="/stock/${slug}/">${esc(nm)}</a>`, slug]);
   }
   stockLinks.sort((a, b) => b[0] - a[0]);
+  const have = new Set(stockLinks.map((s) => s[2]));
+  for (const x of list) { const f = path.join(siteDir, 'etf', x.c, 'index.html'); try { const h = fs.readFileSync(f, 'utf8'); if (!h.includes('__STK_')) continue; fs.writeFileSync(f, h.replace(/__STK_([A-Z0-9.]*)__([\s\S]*?)__STKEND__/g, (m, tk, nm) => { const sl = tk.toLowerCase().replace(/\./g, '-'); return tk && have.has(sl) ? `<a href="/stock/${sl}/">${nm}</a>` : nm; })); } catch (e) {} }
   const linksHtml = stockLinks.slice(0, 30).map((s) => s[1]).join('');
   for (const s of stockLinks) { const f = path.join(siteDir, 'stock', s[2], 'index.html'); fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace('__STOCKLINKS__', linksHtml)); }
   // 종목 목록 페이지
