@@ -4,14 +4,18 @@ import { fileKV } from './kv.mjs';
 const ENV = { KV: fileKV(process.env.CACHE_DIR || '.cache') };
 import fs from 'fs';
 const N = +process.argv[2] || 150, CH = 50;
+// 요청 하나가 멈춰서 전체가 시간 초과되는 걸 막음: 요청마다 15초 제한, 실패한 곳은 끝에 출력
+const _f = globalThis.fetch, FAIL = {};
+globalThis.fetch = (u, o = {}) => _f(u, { ...o, signal: o.signal || AbortSignal.timeout(15000) }).catch((e) => { let h = '?'; try { h = new URL(String(u.url || u)).host; } catch (x) {} FAIL[h] = (FAIL[h] || 0) + 1; throw e; });
+const T0 = Date.now(), within = (p, ms) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error('timeout')), ms))]);
 const call = async (p) => (await w.fetch(new Request('https://x' + p), ENV)).json();
 const list = await call('/api/list');
 const top = list.slice().sort((a, b) => (b.cap || 0) - (a.cap || 0)).slice(0, N);
 const res = {}; let i = 0;
-async function wk() { while (i < top.length) { const e = top[i++]; try { res[e.code] = await call('/api/inav?code=' + e.code); } catch (x) { res[e.code] = { error: String(x) }; } await new Promise((ok) => setTimeout(ok, 800)); } }
+async function wk() { while (i < top.length) { const e = top[i++]; try { res[e.code] = await within(call('/api/inav?code=' + e.code), 45000); } catch (x) { res[e.code] = { error: String(x) }; } await new Promise((ok) => setTimeout(ok, 800)); } }
 await Promise.all([wk(), wk(), wk()]);
 // 실패한 종목은 한 번 더, 하나씩
-for (const e of top) { if (res[e.code] && res[e.code].error) { await new Promise((ok) => setTimeout(ok, 1500)); try { res[e.code] = await call('/api/inav?code=' + e.code); } catch (x) {} } }
+for (const e of top) { if (Date.now() - T0 > 840e3) break; if (res[e.code] && res[e.code].error) { await new Promise((ok) => setTimeout(ok, 1500)); try { res[e.code] = await within(call('/api/inav?code=' + e.code), 45000); } catch (x) {} } }
 // 외국인 순매수는 큰손 데이터(whale.js, 하루 1번)에서 가져옵니다 — 여기서 중복 요청하지 않음
 const fr = {};
 const r1 = (x) => (x == null ? null : Math.round(x * 10) / 10);
@@ -43,4 +47,4 @@ fs.writeFileSync(OUT + '/live.json', JSON.stringify({ at, e: L }));
 fs.writeFileSync(OUT + '/syms.json', JSON.stringify(syms));
 console.log(JSON.stringify({ liveEtf: Object.keys(L).length, syms: syms.length }));
 const ok = Object.values(res).filter((j) => !j.error).length;
-console.log(JSON.stringify({ at, computed: top.length, ok, files: files.map((f) => [f, fs.statSync(f).size]) }));
+console.log(JSON.stringify({ at, computed: top.length, ok, sec: Math.round((Date.now() - T0) / 1000), fail: FAIL, files: files.map((f) => [f, fs.statSync(f).size]) }));
