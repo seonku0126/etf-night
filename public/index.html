@@ -207,6 +207,10 @@ h1{font-size:21px;letter-spacing:-.3px}
 .addb{height:36px;padding:0 12px;border-radius:999px;border:1px solid #5a4a24;background:#2a2216;color:#f5c542;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
 .addm{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center}.addm>div{background:#181b22;border:1px solid var(--line);border-radius:20px 20px 0 0;padding:20px 18px calc(22px + env(safe-area-inset-bottom));max-width:520px;width:100%}
 .addm ol{margin:10px 0 14px;padding-left:20px;line-height:1.9;font-size:14.5px}.addm button{width:100%;border:0;border-radius:12px;padding:12px;font:inherit;font-weight:700;background:var(--acc);color:#111}
+.big1{display:block;width:100%;text-align:left;border-radius:18px;padding:14px 15px;margin-bottom:12px;font:inherit;color:#fff;border:0;cursor:pointer;animation:bpulse 2s ease-in-out infinite}
+.big1.dn{background:linear-gradient(135deg,#1d3a8a,#0f1d4a)}.big1.up{background:linear-gradient(135deg,#8a1d2a,#4a0f16)}.big1 b{display:block;font-size:18px}.big1 span{font-size:13px;opacity:.9}
+@keyframes bpulse{50%{box-shadow:0 0 0 4px rgba(255,255,255,.08)}}@media (prefers-reduced-motion:reduce){.big1{animation:none}}
+.accb{margin-top:8px;font-size:12px;color:var(--mute)}.accb a{color:var(--acc)}
 .pfbtn{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:40;display:flex;align-items:center;gap:6px;background:#1c2029;border:1px solid var(--line);color:var(--ink);padding:10px 14px;border-radius:999px;font-weight:700;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.35)}.pfbtn .up{color:var(--up)}.pfbtn .down{color:var(--down)}
 .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#eef0f4;color:#111;padding:10px 16px;border-radius:12px;font-weight:700;z-index:50;font-size:14px}
 .adhome{margin:0 0 14px}
@@ -638,7 +642,7 @@ function etfMap(){if(!LIST.length)return'';const xs=LIST.filter(x=>x.est!=null&&
   return `<div class="emap"><div class="eh"><b>🗺️ 오늘 밤 ETF 지도</b><span>오른 <i class="up" style="font-style:normal">${up}</i> · 내린 <i class="down" style="font-style:normal">${dn}</i></span></div>
   <div class="eg">${t.map(x=>`<button class="et" style="background:${bg(x.v)}" onclick="openCat('${x.k}')"><span>${MAPN[x.k]}</span><b>${x.v>0?'+':''}${x.v.toFixed(2)}%</b><small>${x.n}개 평균</small></button>`).join('')}</div>
   <div class="ebest">🔥 <b onclick="openD('${best.code}')">${esc(best.name)}</b> <span class="${cls(best.pct)}">${sign(best.pct)}</span> · 🧊 <b onclick="openD('${worst.code}')">${esc(worst.name)}</b> <span class="${cls(worst.pct)}">${sign(worst.pct)}</span></div>
-  <div class="meta" style="margin:6px 0 0">한국 장 마감 후 밤사이 예상 등락 · 레버리지·인버스 제외 · 눌러서 분류별 보기</div></div>`}
+  <div class="meta" style="margin:6px 0 0">한국 장 마감 후 밤사이 예상 등락 · 레버리지·인버스 제외 · 눌러서 분류별 보기</div>${accLine()}</div>`}
 // ---------- 앤트로픽 상장 카드 (일정 탭) ----------
 function antCard(){if(Date.now()>Date.parse('2027-02-10'))return'';const q=MKT&&MKT.q&&MKT.q.ANT;
   return `<div class="antc"><b style="font-size:15.5px">🆕 앤트로픽(ANT) 나스닥 상장</b>${q?` <span style="float:right"><b>$${(+q.p).toFixed(2)}</b> <span class="${cls(q.pc)}">${sign(q.pc)}</span></span>`:''}
@@ -682,6 +686,14 @@ async function addHome(){if(INSTEV){INSTEV.prompt();try{await INSTEV.userChoice}
    :['주소창 오른쪽의 <b>설치 아이콘(⊕)</b>을 누르거나','브라우저 메뉴에서 <b>앱 설치 / 홈 화면에 추가</b>를 눌러요'];
   const m=document.createElement('div');m.className='addm';m.onclick=e=>{if(e.target===m)m.remove()};
   m.innerHTML=`<div><b style="font-size:17px">📲 홈 화면에 앱으로 추가</b><div class="meta" style="margin:4px 0 0">앱처럼 바로 열리고, 저장한 내 계좌도 안 지워져요</div><ol>${steps.map(x=>`<li>${x}</li>`).join('')}</ol><button onclick="this.closest('.addm').remove()">알겠어요</button></div>`;document.body.appendChild(m)}
+
+// ---------- 큰 장 배너: 나스닥100 ETF 밤 예상 평균이 ±1.5% 넘으면 ----------
+function ndxAvg(){const a=LIST.filter(x=>x.cat==='ndx'&&x.pct!=null&&!x.w&&!/레버리지|인버스|\(H\)/.test(x.name));return a.length?a.reduce((s,x)=>s+x.pct,0)/a.length:null}
+function bigBanner(){const v=ndxAvg();if(v==null||Math.abs(v)<1.5)return'';const dn=v<0;
+  return `<button class="big1 ${dn?'dn':'up'}" onclick="shareNow()"><b>${dn?'🚨 오늘 밤 미국장 급락 중':'🚀 오늘 밤 미국장 급등 중'} · 나스닥100 ETF ${sign(v)}</b><span>${dn?'내일 아침 내 ETF 얼마나 빠질까? 아래 지도에서 확인 · 눌러서 친구에게 알려주기 ↗':'내일 아침 내 ETF 얼마나 오를까? 아래 지도에서 확인 · 눌러서 친구에게 알려주기 ↗'}</span></button>`}
+// ---------- 추정 정확도: 어제 기준가로 오늘 기준가를 다시 계산했을 때 오차 ----------
+function accStat(){const v=Object.values(DET).map(d=>d&&d.check&&d.check.errBp).filter(x=>x!=null&&isFinite(x)).map(Math.abs).sort((a,b)=>a-b);if(v.length<10)return null;return{n:v.length,med:v[v.length>>1]/100,in30:Math.round(v.filter(x=>x<=30).length/v.length*100)}}
+function accLine(){const a=accStat();return a?`<div class="accb">🎯 계산 정확도: ETF ${a.n}개 중간 오차 <b style="color:var(--ink)">${a.med.toFixed(2)}%</b> · ${a.in30}%가 ±0.3% 안 · <a href="/accuracy/">어떻게 쟀나요?</a></div>`:''}
 
 function pfChip(){
   if(view.name==='pf'||!PF.items.length)return '';
@@ -880,7 +892,7 @@ function rankView(){
   const fbd=(LIST.find(x=>x.fbd)||{}).fbd;
   const note={nightUp:'한국 장 마감 뒤 지금까지 오른 순 (마감 iNAV 대비)',nightDown:'한국 장 마감 뒤 지금까지 내린 순 (마감 iNAV 대비)',amt:'오늘 한국 장 거래대금',fbuy:`외국인 순매수 금액 (${fbd?fbd.slice(4,6)+'/'+fbd.slice(6):''} 기준)`,fsell:`외국인 순매도 금액 (${fbd?fbd.slice(4,6)+'/'+fbd.slice(6):''} 기준)`,todayUp:'오늘 한국 장 등락률',todayDown:'오늘 한국 장 등락률'}[k];
   const seg=RANKS.map(r=>`<button class="${rankKey===r[0]?'on':''}" onclick="rankKey='${r[0]}';render()">${r[1]}</button>`).join('');
-  return `${etfMap()}${amCard()}${instBox()}${premBox()}${nightBanner()}${evStrip()}<div class="seg">${seg}</div><div class="note">${note} · 상위 ${xs.length}개</div><div class="list">${xs.map((x,i)=>li(x,i,right(x))).join('')||'<div class="empty">데이터가 없어요</div>'}</div>${fbBox()}`;
+  return `${bigBanner()}${etfMap()}${amCard()}${instBox()}${premBox()}${nightBanner()}${evStrip()}<div class="seg">${seg}</div><div class="note">${note} · 상위 ${xs.length}개</div><div class="list">${xs.map((x,i)=>li(x,i,right(x))).join('')||'<div class="empty">데이터가 없어요</div>'}</div>${fbBox()}`;
 }
 function card(code){
   const d=DATA[code],m=LIST.find(x=>x.code===code)||{};
@@ -1070,6 +1082,6 @@ function status(){if(META&&LIVEP&&LIVEP.n){$('#status').textContent='🟢 실시
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')load()});
 })()
 </script>
-<div style="text-align:center;padding:18px 0 28px;font-size:12px;color:#8a919e"><a href="guide/night-price/" style="color:#8a919e">밤에 ETF 가격 보는 법</a> · <a href="guide/inav/" style="color:#8a919e">iNAV란?</a> · <a href="stock/" style="color:#8a919e">종목으로 ETF 찾기</a> · <a href="guide/anthropic-ipo/" style="color:#8a919e">앤트로픽 상장</a> · <a href="guide/us-holidays/" style="color:#8a919e">미국 휴장일</a> · <a href="night/" style="color:#8a919e">오늘 밤 시황</a> · <a href="guide/" style="color:#8a919e">가이드 더보기</a> · <a href="etf/" style="color:#8a919e">전체 ETF 목록</a> · <a href="privacy.html" style="color:#8a919e">개인정보처리방침</a> · 정보 제공 목적이며 투자 권유가 아닙니다</div>
+<div style="text-align:center;padding:18px 0 28px;font-size:12px;color:#8a919e"><a href="guide/night-price/" style="color:#8a919e">밤에 ETF 가격 보는 법</a> · <a href="guide/inav/" style="color:#8a919e">iNAV란?</a> · <a href="stock/" style="color:#8a919e">종목으로 ETF 찾기</a> · <a href="accuracy/" style="color:#8a919e">정확도 공개</a> · <a href="guide/anthropic-ipo/" style="color:#8a919e">앤트로픽 상장</a> · <a href="guide/us-holidays/" style="color:#8a919e">미국 휴장일</a> · <a href="night/" style="color:#8a919e">오늘 밤 시황</a> · <a href="guide/" style="color:#8a919e">가이드 더보기</a> · <a href="etf/" style="color:#8a919e">전체 ETF 목록</a> · <a href="privacy.html" style="color:#8a919e">개인정보처리방침</a> · 정보 제공 목적이며 투자 권유가 아닙니다</div>
 </body>
 </html>

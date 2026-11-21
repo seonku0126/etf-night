@@ -263,6 +263,35 @@ ${ta.length || tb.length ? `<div class="card"><h2>많이 담은 종목</h2><div 
     urls.push(`${SITE}/stock/`);
   }
 }
+// ---------- 추정 정확도 공개 (/accuracy/) ----------
+{
+  const rows = list.map((x) => ({ x, e: det[x.c] && det[x.c].check && det[x.c].check.errBp })).filter((r) => r.e != null && isFinite(r.e));
+  if (rows.length >= 10) {
+    const ab = rows.map((r) => Math.abs(r.e)).sort((a, b) => a - b), med = ab[ab.length >> 1] / 100, avg = ab.reduce((s, v) => s + v, 0) / ab.length / 100;
+    const pin = (bp) => Math.round(ab.filter((v) => v <= bp).length / ab.length * 100);
+    const top = rows.sort((a, b) => (b.x.cap || 0) - (a.x.cap || 0)).slice(0, 40);
+    const url = `${SITE}/accuracy/`;
+    const t = `ETF 밤 예상가 정확도 공개 — 중간 오차 ${med.toFixed(2)}% (${rows.length}개 ETF)`;
+    const desc = `데이앤나잇 ETF의 계산 방식으로 어제 기준가에서 오늘 기준가(NAV)를 다시 계산해 보면 ETF ${rows.length}개 중간 오차 ${med.toFixed(2)}%, ${pin(30)}%가 ±0.3% 안이에요. ETF별 오차를 매일 공개해요.`;
+    const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<title>${esc(t)} | 데이앤나잇 ETF</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${url}">
+<meta property="og:title" content="${esc(t)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:image" content="${SITE}/og.png"><meta property="og:url" content="${url}">
+<link rel="icon" href="/icon.svg"><meta name="theme-color" content="#0f1115"><style>${CSS} .kv3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.kv3 div{background:#13161c;border-radius:10px;padding:10px 4px;text-align:center}.kv3 span{display:block;color:var(--mute);font-size:12px}.kv3 b{font-size:20px}</style></head><body>
+<a class="top" href="/"><img src="/icon.svg" alt="">데이앤나잇 ETF</a>
+<h1>🎯 밤 예상가, 얼마나 맞을까?</h1><div class="sub">${atTxt} 계산 · 매일 자동 갱신</div>
+<div class="card"><div class="kv3"><div><span>중간 오차</span><b>${med.toFixed(2)}%</b></div><div><span>±0.1% 안</span><b>${pin(10)}%</b></div><div><span>±0.3% 안</span><b>${pin(30)}%</b></div></div>
+<p style="margin:12px 0 0">ETF ${rows.length}개를 같은 방식으로 검산했어요. 평균 오차는 ${avg.toFixed(2)}%예요.</p></div>
+<div class="card"><h2>어떻게 쟀나요?</h2><p style="margin:0;color:#c9ced8">ETF 운용사는 매일 장 마감 뒤 그날의 기준가(NAV)를 발표해요. 우리는 <b>어제 기준가</b>에 어제 장 마감 이후 실제로 움직인 미국 주식 가격과 환율을 넣어 오늘 기준가를 계산하고, 실제 발표된 오늘 기준가와 비교해요. 밤 예상 가격이 바로 이 계산식으로 만들어지기 때문에, 이 오차가 작을수록 밤 예상 가격도 믿을 만해요.</p>
+<p class="sub" style="margin:8px 0 0">다음 날 아침 실제 시가는 호가·수급에 따라 기준가와 조금 다르게 시작할 수 있어요. 지난 검증에서 아침 예상가와 실제 시가의 중간 차이는 0.3% 안팎이었어요.</p></div>
+<div class="card"><h2>ETF별 오차 (시가총액 상위)</h2><table>${top.map((r) => `<tr><td><a href="/etf/${r.x.c}/" style="color:var(--ink)">${esc(r.x.n)}</a></td><td class="${Math.abs(r.e) <= 30 ? '' : 'down'}">${(r.e > 0 ? '+' : '') + (r.e / 100).toFixed(2)}%</td></tr>`).join('')}</table></div>
+<a class="cta" href="/">지금 밤 예상 가격 보기 →</a>
+<p class="note">레버리지·합성 ETF는 선물×배수로 계산해 오차가 더 클 수 있어요. 추정치이며 투자 권유가 아닙니다. <a href="/guide/inav/">iNAV란?</a></p></body></html>`;
+    fs.mkdirSync(path.join(siteDir, 'accuracy'), { recursive: true });
+    fs.writeFileSync(path.join(siteDir, 'accuracy', 'index.html'), html);
+    urls.push(url);
+  }
+}
 // ---------- 오늘 밤 시황 (매 갱신마다 새로 씀) ----------
 {
   const M = atKst.getUTCMonth() + 1, D = atKst.getUTCDate(), H = atKst.getUTCHours();
