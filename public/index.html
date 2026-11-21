@@ -692,7 +692,7 @@ async function addHome(){if(INSTEV){INSTEV.prompt();try{await INSTEV.userChoice}
   m.innerHTML=`<div><b style="font-size:17px">📲 홈 화면에 앱으로 추가</b><div class="meta" style="margin:4px 0 0">앱처럼 바로 열리고, 저장한 내 계좌도 안 지워져요</div><ol>${steps.map(x=>`<li>${x}</li>`).join('')}</ol><button onclick="this.closest('.addm').remove()">알겠어요</button></div>`;document.body.appendChild(m)}
 
 // ---------- 큰 장 배너: 나스닥100 ETF 밤 예상 평균이 ±1.5% 넘으면 ----------
-function ndxAvg(){const a=LIST.filter(x=>x.cat==='ndx'&&x.pct!=null&&!x.w&&!/레버리지|인버스|\(H\)/.test(x.name));return a.length?a.reduce((s,x)=>s+x.pct,0)/a.length:null}
+function ndxAvg(){const a=LIST.filter(x=>x.cat==='ndx'&&x.pct!=null&&!/레버리지|인버스|\(H\)/.test(x.name));return a.length?a.reduce((s,x)=>s+x.pct,0)/a.length:null}
 function bigBanner(){const v=ndxAvg();if(v==null||Math.abs(v)<1.5)return'';const dn=v<0;
   return `<button class="big1 ${dn?'dn':'up'}" onclick="shareNow()"><b>${dn?'🚨 오늘 밤 미국장 급락 중':'🚀 오늘 밤 미국장 급등 중'} · 나스닥100 ETF ${sign(v)}</b><span>${dn?'내일 아침 내 ETF 얼마나 빠질까? 아래 지도에서 확인 · 눌러서 친구에게 알려주기 ↗':'내일 아침 내 ETF 얼마나 오를까? 아래 지도에서 확인 · 눌러서 친구에게 알려주기 ↗'}</span></button>`}
 // ---------- 추정 정확도: 어제 기준가로 오늘 기준가를 다시 계산했을 때 오차 ----------
