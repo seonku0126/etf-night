@@ -211,6 +211,9 @@ h1{font-size:21px;letter-spacing:-.3px}
 .big1.dn{background:linear-gradient(135deg,#1d3a8a,#0f1d4a)}.big1.up{background:linear-gradient(135deg,#8a1d2a,#4a0f16)}.big1 b{display:block;font-size:18px}.big1 span{font-size:13px;opacity:.9}
 @keyframes bpulse{50%{box-shadow:0 0 0 4px rgba(255,255,255,.08)}}@media (prefers-reduced-motion:reduce){.big1{animation:none}}
 .accb{margin-top:8px;font-size:12px;color:var(--mute)}.accb a{color:var(--acc)}
+.emap .tg{display:flex;gap:4px;margin-bottom:8px}.emap .tg button{flex:1;border:1px solid var(--line);background:#13161c;color:var(--mute);border-radius:9px;padding:6px 0;font:inherit;font-size:12.5px;cursor:pointer}.emap .tg button.on{background:#2a2f3b;color:var(--ink);border-color:#3a4566}
+.tmap{position:relative;width:100%;height:330px;border-radius:12px;overflow:hidden}.tmap>div{position:absolute;box-sizing:border-box;border:1px solid #0f1115;padding:4px 5px;overflow:hidden;cursor:pointer;color:#fff;line-height:1.2}
+.tmap>div b{display:block;font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tmap>div i{font-style:normal;font-size:12px;font-weight:800}
 .pfbtn{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:40;display:flex;align-items:center;gap:6px;background:#1c2029;border:1px solid var(--line);color:var(--ink);padding:10px 14px;border-radius:999px;font-weight:700;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.35)}.pfbtn .up{color:var(--up)}.pfbtn .down{color:var(--down)}
 .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#eef0f4;color:#111;padding:10px 16px;border-radius:12px;font-weight:700;z-index:50;font-size:14px}
 .adhome{margin:0 0 14px}
@@ -640,7 +643,8 @@ function etfMap(){if(!LIST.length)return'';const xs=LIST.filter(x=>x.est!=null&&
   const bg=v=>{const a=Math.min(1,Math.abs(v)/2)*0.75+0.12;return v>0.005?`rgba(255,90,95,${a})`:v<-0.005?`rgba(78,140,255,${a})`:'#22262f'};
   const up=xs.filter(x=>x.pct>0.005).length,dn=xs.filter(x=>x.pct<-0.005).length,best=xs.slice().sort((a,b)=>b.pct-a.pct)[0],worst=xs.slice().sort((a,b)=>a.pct-b.pct)[0];
   return `<div class="emap"><div class="eh"><b>🗺️ 오늘 밤 ETF 지도</b><span>오른 <i class="up" style="font-style:normal">${up}</i> · 내린 <i class="down" style="font-style:normal">${dn}</i></span></div>
-  <div class="eg">${t.map(x=>`<button class="et" style="background:${bg(x.v)}" onclick="openCat('${x.k}')"><span>${MAPN[x.k]}</span><b>${x.v>0?'+':''}${x.v.toFixed(2)}%</b><small>${x.n}개 평균</small></button>`).join('')}</div>
+  <div class="tg"><button class="${store.get('mapMode','etf')==='etf'?'on':''}" onclick="mapMode('etf')">ETF별</button><button class="${store.get('mapMode','etf')==='cat'?'on':''}" onclick="mapMode('cat')">분류별</button></div>
+  ${store.get('mapMode','etf')==='etf'?treeMap():`<div class="eg">${t.map(x=>`<button class="et" style="background:${bg(x.v)}" onclick="openCat('${x.k}')"><span>${MAPN[x.k]}</span><b>${x.v>0?'+':''}${x.v.toFixed(2)}%</b><small>${x.n}개 평균</small></button>`).join('')}</div>`}
   <div class="ebest">🔥 <b onclick="openD('${best.code}')">${esc(best.name)}</b> <span class="${cls(best.pct)}">${sign(best.pct)}</span> · 🧊 <b onclick="openD('${worst.code}')">${esc(worst.name)}</b> <span class="${cls(worst.pct)}">${sign(worst.pct)}</span></div>
   <div class="meta" style="margin:6px 0 0">한국 장 마감 후 밤사이 예상 등락 · 레버리지·인버스 제외 · 눌러서 분류별 보기</div>${accLine()}</div>`}
 // ---------- 앤트로픽 상장 카드 (일정 탭) ----------
@@ -694,6 +698,19 @@ function bigBanner(){const v=ndxAvg();if(v==null||Math.abs(v)<1.5)return'';const
 // ---------- 추정 정확도: 어제 기준가로 오늘 기준가를 다시 계산했을 때 오차 ----------
 function accStat(){const v=Object.values(DET).map(d=>d&&d.check&&d.check.errBp).filter(x=>x!=null&&isFinite(x)).map(Math.abs).sort((a,b)=>a-b);if(v.length<10)return null;return{n:v.length,med:v[v.length>>1]/100,in30:Math.round(v.filter(x=>x<=30).length/v.length*100)}}
 function accLine(){const a=accStat();return a?`<div class="accb">🎯 계산 정확도: ETF ${a.n}개 중간 오차 <b style="color:var(--ink)">${a.med.toFixed(2)}%</b> · ${a.in30}%가 ±0.3% 안 · <a href="/accuracy/">어떻게 쟀나요?</a></div>`:''}
+
+// ---------- ETF 지도: 트리맵(크기=거래대금, 색=밤 예상 등락) ----------
+function squarify(items,x,y,w,h){const out=[];let rest=items.slice();const total=rest.reduce((s,i)=>s+i.v,0);const sc=w*h/total;rest=rest.map(i=>({...i,a:i.v*sc}));
+  const worst=(row,len)=>{const s=row.reduce((t,r)=>t+r.a,0),mx=Math.max(...row.map(r=>r.a)),mn=Math.min(...row.map(r=>r.a));return Math.max(len*len*mx/(s*s),s*s/(len*len*mn))};
+  while(rest.length){const len=Math.min(w,h);let row=[rest[0]],i=1;while(i<rest.length&&worst(row.concat(rest[i]),len)<=worst(row,len)){row.push(rest[i]);i++}
+    const s=row.reduce((t,r)=>t+r.a,0);if(w>=h){const cw=s/h;let cy=y;for(const r of row){const ch=r.a/cw;out.push({...r,x,y:cy,w:cw,h:ch});cy+=ch}x+=cw;w-=cw}
+    else{const ch=s/w;let cx=x;for(const r of row){const cw=r.a/ch;out.push({...r,x:cx,y,w:cw,h:ch});cx+=cw}y+=ch;h-=ch}rest=rest.slice(i)}return out}
+function treeMap(){const xs=LIST.filter(x=>x.est!=null&&x.pct!=null&&(x.amt||0)>0).sort((a,b)=>(b.amt||0)-(a.amt||0)).slice(0,36);if(xs.length<5)return'';
+  const W=1000,H=1000,r=squarify(xs.map(x=>({x0:x,v:Math.sqrt(x.amt)})),0,0,W,H);
+  const col=v=>{const a=Math.min(1,Math.abs(v)/2.5);return v>0.005?`rgb(${Math.round(70+150*a)},${Math.round(40-10*a)},${Math.round(48-8*a)})`:v<-0.005?`rgb(${Math.round(30-10*a)},${Math.round(60+20*a)},${Math.round(90+130*a)})`:'#2a2e37'};
+  const sh=n=>n.replace(/^(TIGER|KODEX|ACE|RISE|SOL|TIME|PLUS|KIWOOM|HANARO|KoAct|WON|1Q) /,'').replace(/\(합성.*?\)|\(H\)/g,m=>m==='(H)'?'(H)':'');
+  return `<div class="tmap">${r.map(b=>{const x=b.x0,big=b.w*b.h>18000;return `<div style="left:${b.x/10}%;top:${b.y/10}%;width:${b.w/10}%;height:${b.h/10}%;background:${col(x.pct)}" onclick="openD('${x.code}')" title="${esc(x.name)}">${big?`<span style="display:block;font-size:10px;opacity:.75">${esc((x.name.match(/^(TIGER|KODEX|ACE|RISE|SOL|TIME|PLUS|KIWOOM|HANARO|KoAct|WON|1Q)/)||[''])[0])}</span>`:''}${b.w*b.h>6000?`<b style="font-size:${big?12.5:10.5}px">${esc(sh(x.name))}</b><i style="font-size:${big?14:11}px">${x.pct>0?'+':''}${x.pct.toFixed(2)}%</i>`:''}</div>`}).join('')}</div><div class="meta" style="margin:6px 0 0">칸 크기 = 오늘 거래대금 · 색 = 밤사이 예상 등락 · 눌러서 자세히</div>`}
+function mapMode(m){store.set('mapMode',m);render()}
 
 function pfChip(){
   if(view.name==='pf'||!PF.items.length)return '';
