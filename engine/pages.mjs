@@ -379,7 +379,7 @@ ${faqHtml}
     urls.unshift(url); evLinks.push(`<a href="/event/${e.id}/">${esc(e.title)}</a>`);
   }
 }
-for (const g of ['','inav','night-price','us-market-hours','premium-discount','hedged','futures','suneung-market-hours','us-holidays','us-cpi-schedule','anthropic-ipo','leverage-decay','covered-call','domestic-vs-direct']) urls.push(`${SITE}/guide/${g}${g?'/':''}`);
+for (const g of ['','inav','night-price','us-market-hours','premium-discount','hedged','futures','suneung-market-hours','us-holidays','us-cpi-schedule','anthropic-ipo','leverage-decay','covered-call','domestic-vs-direct','etf-after-market']) urls.push(`${SITE}/guide/${g}${g?'/':''}`);
 
 const today = atKst.toISOString().slice(0, 10);
 fs.writeFileSync(path.join(siteDir, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
