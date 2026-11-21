@@ -202,8 +202,11 @@ h1{font-size:21px;letter-spacing:-.3px}
 .emap .et span{display:block;font-size:12px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.emap .et b{display:block;font-size:17px;margin-top:2px}.emap .et small{font-size:10.5px;opacity:.6}
 .emap .ebest{margin-top:9px;font-size:12.5px;color:var(--mute)}.emap .ebest b{color:var(--ink)}
 .antc{background:linear-gradient(135deg,#2b1f1a,#16120f);border:1px solid #6b4a36;border-radius:18px;padding:14px 15px;margin-bottom:12px}.antc ul{margin:8px 0 0;padding-left:17px;font-size:13px;line-height:1.6}
-.rfb{margin-left:auto;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:#1c2029;color:var(--ink);font-size:19px;line-height:1;cursor:pointer}.rfb:active{transform:rotate(180deg);transition:transform .3s}
+.rfb{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:#1c2029;color:var(--ink);font-size:19px;line-height:1;cursor:pointer}.rfb:active{transform:rotate(180deg);transition:transform .3s}
 .inst{display:flex;align-items:center;gap:10px;background:var(--card);border:1px dashed #3a4566;border-radius:14px;padding:10px 12px;margin-bottom:12px;font-size:13px}.inst b{display:block;font-size:13.5px}.inst button{border:0;border-radius:10px;padding:8px 10px;font:inherit;font-size:12.5px;font-weight:700}
+.addb{height:36px;padding:0 12px;border-radius:999px;border:1px solid #5a4a24;background:#2a2216;color:#f5c542;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.addm{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center}.addm>div{background:#181b22;border:1px solid var(--line);border-radius:20px 20px 0 0;padding:20px 18px calc(22px + env(safe-area-inset-bottom));max-width:520px;width:100%}
+.addm ol{margin:10px 0 14px;padding-left:20px;line-height:1.9;font-size:14.5px}.addm button{width:100%;border:0;border-radius:12px;padding:12px;font:inherit;font-weight:700;background:var(--acc);color:#111}
 .pfbtn{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:40;display:flex;align-items:center;gap:6px;background:#1c2029;border:1px solid var(--line);color:var(--ink);padding:10px 14px;border-radius:999px;font-weight:700;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.35)}.pfbtn .up{color:var(--up)}.pfbtn .down{color:var(--down)}
 .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#eef0f4;color:#111;padding:10px 16px;border-radius:12px;font-weight:700;z-index:50;font-size:14px}
 .adhome{margin:0 0 14px}
@@ -308,7 +311,7 @@ h1 span{background:linear-gradient(90deg,#f5c542,#ffde7a,#ff9f43,#f5c542);backgr
 </head>
 <body>
 <header>
-  <div class="brand"><img src="icon.svg" alt=""><h1>데이앤나잇 <span style="color:var(--acc)">ETF</span></h1><button class="rfb" onclick="goHome()" aria-label="홈으로 가서 새로고침">↻</button></div>
+  <div class="brand"><img src="icon.svg" alt=""><h1>데이앤나잇 <span style="color:var(--acc)">ETF</span></h1><span style="margin-left:auto;display:flex;gap:6px"><button class="addb" id="addb" onclick="addHome()" aria-label="홈 화면에 앱으로 추가">📲 앱 추가</button><button class="rfb" onclick="goHome()" aria-label="홈으로 가서 새로고침">↻</button></span></div>
   <p class="tagline">미국장이 열린 밤, <b>내 해외 ETF는 지금 얼마일까?</b><br>밤사이 예상 가격과 큰손 움직임을 한눈에.</p>
   <div class="sub" id="status">불러오는 중…</div>
   <div class="search"><input id="q" placeholder="🔍 ETF 이름으로 검색 (예: 나스닥, S&P500)" autocomplete="off"><div class="results" id="res"></div></div>
@@ -665,6 +668,20 @@ function instBox(){const sa=window.matchMedia&&matchMedia('(display-mode: standa
   const ios=/iPhone|iPad|iPod/.test(navigator.userAgent);if(!ios&&!INSTEV)return'';
   return `<div class="inst"><div style="font-size:24px">📲</div><div style="flex:1"><b>홈 화면에 추가하면 앱처럼 바로 열려요</b>${ios?'<span class="meta" style="margin:0">사파리 아래 공유 버튼(□↑) → "홈 화면에 추가"</span>':'<span class="meta" style="margin:0">설치해도 용량은 거의 안 들어요</span>'}</div>${ios?'':'<button style="background:var(--acc);color:#111" onclick="instGo()">추가</button>'}<button style="background:none;color:var(--mute)" onclick="store.set(\'instHide\',Date.now()+30*864e5);render()">✕</button></div>`}
 async function instGo(){if(!INSTEV)return;INSTEV.prompt();try{await INSTEV.userChoice}catch(e){}INSTEV=null;render()}
+
+// ---------- 상단 '앱 추가' 버튼 ----------
+const isStandalone=()=>window.matchMedia&&matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+window.addEventListener('appinstalled',()=>{const b=document.getElementById('addb');if(b)b.style.display='none'});
+setTimeout(()=>{if(isStandalone()){const b=document.getElementById('addb');if(b)b.style.display='none'}},0);
+async function addHome(){if(INSTEV){INSTEV.prompt();try{await INSTEV.userChoice}catch(e){}INSTEV=null;return}
+  const ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),inapp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(ua);
+  const steps=inapp?['오른쪽 아래(또는 위) <b>⋮ / 공유</b> 메뉴에서 <b>다른 브라우저로 열기</b>를 눌러요','열린 사파리·크롬에서 이 버튼을 다시 눌러요']
+   :ios?['사파리 아래쪽 <b>공유 버튼(□↑)</b>을 눌러요','목록을 내려서 <b>홈 화면에 추가</b>를 눌러요','오른쪽 위 <b>추가</b>를 누르면 끝!']
+   :/Android/i.test(ua)?['크롬 오른쪽 위 <b>⋮ 메뉴</b>를 눌러요','<b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 눌러요']
+   :['주소창 오른쪽의 <b>설치 아이콘(⊕)</b>을 누르거나','브라우저 메뉴에서 <b>앱 설치 / 홈 화면에 추가</b>를 눌러요'];
+  const m=document.createElement('div');m.className='addm';m.onclick=e=>{if(e.target===m)m.remove()};
+  m.innerHTML=`<div><b style="font-size:17px">📲 홈 화면에 앱으로 추가</b><div class="meta" style="margin:4px 0 0">앱처럼 바로 열리고, 저장한 내 계좌도 안 지워져요</div><ol>${steps.map(x=>`<li>${x}</li>`).join('')}</ol><button onclick="this.closest('.addm').remove()">알겠어요</button></div>`;document.body.appendChild(m)}
 
 function pfChip(){
   if(view.name==='pf'||!PF.items.length)return '';
